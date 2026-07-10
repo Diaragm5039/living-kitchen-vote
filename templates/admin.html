@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Living Kitchen - 管理后台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#0f0a1a;color:#e2e8f0;min-height:100vh;
+}
+:root{
+  --cat-凉菜:#22c55e;--cat-热菜:#f97316;--cat-汤:#14b8a6;
+  --cat-主食:#6366f1;--cat-甜品:#ec4899;
+  --glass:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.1);
+}
+
+/* ── Layout ── */
+.container{max-width:900px;margin:0 auto;padding:20px 16px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--glass-border);margin-bottom:24px}
+.header h1{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-actions{display:flex;gap:8px}
+
+/* ── Buttons ── */
+button{cursor:pointer;font:inherit;border:none;color:inherit}
+.btn{padding:8px 16px;border-radius:10px;font-size:.85rem;font-weight:500;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 2px 10px rgba(99,102,241,.3)}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(99,102,241,.5)}
+.btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-ghost{background:var(--glass);border:1px solid var(--glass-border)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px}
+.btn:active{transform:scale(.97)}
+
+/* ── Login ── */
+.login-box{
+  max-width:360px;margin:80px auto;text-align:center;
+  padding:40px 24px;border-radius:24px;
+  background:var(--glass);border:1px solid var(--glass-border);
+}
+.login-box h2{font-size:1.3rem;margin-bottom:8px}
+.login-box p{color:#94a3b8;font-size:.85rem;margin-bottom:24px}
+.login-box input{
+  width:100%;padding:12px 16px;border-radius:12px;margin-bottom:12px;
+  background:rgba(255,255,255,.05);border:1px solid var(--glass-border);
+  color:#fff;font-size:1rem;outline:none;
+}
+.login-box input:focus{border-color:#818cf8}
+.login-box .btn{width:100%}
+.login-error{color:#ef4444;font-size:.8rem;margin-top:8px;display:none}
+
+/* ── Stats ── */
+.stats-bar{
+  display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;
+}
+.stat-card{
+  flex:1;min-width:120px;padding:16px;border-radius:16px;
+  background:var(--glass);border:1px solid var(--glass-border);text-align:center;
+}
+.stat-card .num{font-size:1.8rem;font-weight:700;color:#818cf8}
+.stat-card .label{font-size:.75rem;color:#94a3b8;margin-top:4px}
+
+/* ── Toolbar ── */
+.toolbar{
+  display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;
+}
+.toolbar select,.toolbar input{
+  padding:8px 12px;border-radius:10px;
+  background:rgba(255,255,255,.05);border:1px solid var(--glass-border);
+  color:#e2e8f0;font-size:.85rem;outline:none;
+}
+.toolbar select:focus,.toolbar input:focus{border-color:#818cf8}
+.toolbar input{flex:1;min-width:160px}
+
+/* ── Table ── */
+.dish-table{width:100%;border-collapse:collapse}
+.dish-table th{
+  text-align:left;font-size:.75rem;color:#94a3b8;font-weight:600;
+  padding:8px 12px;border-bottom:1px solid var(--glass-border);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.dish-table td{
+  padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);
+  font-size:.85rem;vertical-align:middle;
+}
+.dish-table tr:hover td{background:rgba(255,255,255,.02)}
+.cat-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:.7rem;font-weight:600;
+}
+.vote-nums{font-size:.75rem;color:#94a3b8}
+.vote-nums .likes{color:#22c55e;font-weight:600}
+.actions-cell{display:flex;gap:4px}
+
+/* ── Modal ── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;backdrop-filter:blur(4px);
+}
+.modal{
+  background:#1e1b2e;border-radius:20px;padding:28px;
+  width:90%;max-width:440px;border:1px solid var(--glass-border);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.modal h3{font-size:1.1rem;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.8rem;color:#94a3b8;margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:10px 14px;border-radius:10px;
+  background:rgba(255,255,255,.05);border:1px solid var(--glass-border);
+  color:#e2e8f0;font-size:.9rem;outline:none;resize:vertical;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#818cf8}
+.form-group textarea{min-height:80px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:60px 20px;color:#64748b}
+.empty .icon{font-size:2.5rem;margin-bottom:12px}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .dish-table .ingredients-col{display:none}
+  .stats-bar{gap:8px}
+  .stat-card{min-width:80px;padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Admin Panel -->
+  <div class="header">
+    <h1>🍽 菜品管理后台</h1>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openAddModal()">+ 添加菜品</button>
+      <button class="btn btn-danger btn-sm" onclick="resetVotes()">重置投票</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card"><div class="num" id="stat-users">-</div><div class="label">参与人数</div></div>
+    <div class="stat-card"><div class="num" id="stat-dishes">-</div><div class="label">菜品总数</div></div>
+    <div class="stat-card"><div class="num" id="stat-votes">-</div><div class="label">投票总数</div></div>
+    <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">喜欢总数</div></div>
+  </div>
+
+  <div class="toolbar">
+    <select id="filter-cat" onchange="renderTable()">
+      <option value="">全部分类</option>
+      <option value="凉菜">🥗 凉菜</option>
+      <option value="热菜">🔥 热菜</option>
+      <option value="汤">🍲 汤</option>
+      <option value="主食">🍚 主食</option>
+      <option value="甜品">🍰 甜品</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="搜索菜品..." oninput="renderTable()">
+    <select id="sort-by" onchange="renderTable()">
+      <option value="category">按分类排序</option>
+      <option value="likes">按喜欢数排序</option>
+      <option value="name">按名称排序</option>
+    </select>
+  </div>
+
+  <div id="table-container"></div>
+</div>
+
+<!-- Edit/Add Modal -->
+<div class="modal-backdrop" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">添加菜品</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>菜品名称</label>
+      <input type="text" id="edit-name" placeholder="例：可乐鸡翅">
+    </div>
+    <div class="form-group">
+      <label>分类</label>
+      <select id="edit-category">
+        <option value="凉菜">🥗 凉菜</option>
+        <option value="热菜">🔥 热菜</option>
+        <option value="汤">🍲 汤</option>
+        <option value="主食">🍚 主食</option>
+        <option value="甜品">🍰 甜品</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>食材（用顿号分隔）</label>
+      <textarea id="edit-ingredients" placeholder="例：鸡翅中、可乐、料酒、姜、葱、生抽、老抽"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveDish()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const catEmoji = { '凉菜':'🥗','热菜':'🔥','汤':'🍲','主食':'🍚','甜品':'🍰' };
+const catColor = { '凉菜':'#22c55e','热菜':'#f97316','汤':'#14b8a6','主食':'#6366f1','甜品':'#ec4899' };
+let dishes = [];
+let results = [];
+
+async function api(url, opts) {
+  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (res.status === 401) { location.href = '/admin-login'; return null; }
+  return res.json();
+}
+
+// ── Login ──
+async function logout() {
+  await api('/api/admin/logout', { method: 'POST' });
+  location.href = '/admin-login';
+}
+
+// ── Load Data ──
+async function loadData() {
+  const [d, r, s] = await Promise.all([
+    api('/api/dishes'), api('/api/results'), api('/api/stats')
+  ]);
+  if (!d) return;
+  dishes = d;
+  results = r;
+  document.getElementById('stat-users').textContent = s.total_users;
+  document.getElementById('stat-dishes').textContent = s.total_dishes;
+  document.getElementById('stat-votes').textContent = s.total_votes;
+  document.getElementById('stat-likes').textContent = r.reduce((a, b) => a + b.likes, 0);
+  renderTable();
+}
+
+// ── Render Table ──
+function renderTable() {
+  const cat = document.getElementById('filter-cat').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+  const sort = document.getElementById('sort-by').value;
+
+  let data = results.slice();
+  if (cat) data = data.filter(d => d.category === cat);
+  if (search) data = data.filter(d => d.name.toLowerCase().includes(search) || d.ingredients.toLowerCase().includes(search));
+
+  if (sort === 'likes') data.sort((a, b) => b.likes - a.likes);
+  else if (sort === 'name') data.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  else data.sort((a, b) => {
+    const cats = ['凉菜','热菜','汤','主食','甜品'];
+    return cats.indexOf(a.category) - cats.indexOf(b.category) || a.id - b.id;
+  });
+
+  if (data.length === 0) {
+    document.getElementById('table-container').innerHTML = '<div class="empty"><div class="icon">🍽</div><p>没有找到菜品</p></div>';
+    return;
+  }
+
+  let html = `<table class="dish-table">
+    <thead><tr>
+      <th>菜品</th><th>分类</th><th class="ingredients-col">食材</th><th>投票</th><th>操作</th>
+    </tr></thead><tbody>`;
+
+  for (const d of data) {
+    const color = catColor[d.category] || '#818cf8';
+    const ingShort = d.ingredients.length > 40 ? d.ingredients.slice(0, 40) + '...' : d.ingredients;
+    html += `<tr>
+      <td style="font-weight:500">${d.emoji} ${d.name}</td>
+      <td><span class="cat-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${d.category}</span></td>
+      <td class="ingredients-col" style="color:#94a3b8;font-size:.75rem">${ingShort}</td>
+      <td class="vote-nums"><span class="likes">♥${d.likes}</span> ✕${d.dislikes} ~${d.no_ideas}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal(${d.id})">编辑</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDish(${d.id},'${d.name}')">删除</button>
+      </div></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('table-container').innerHTML = html;
+}
+
+// ── Modal ──
+function openAddModal() {
+  document.getElementById('modal-title').textContent = '添加菜品';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('edit-name').value = '';
+  document.getElementById('edit-category').value = '凉菜';
+  document.getElementById('edit-ingredients').value = '';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function openEditModal(id) {
+  const d = results.find(r => r.id === id);
+  if (!d) return;
+  document.getElementById('modal-title').textContent = '编辑菜品';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-name').value = d.name;
+  document.getElementById('edit-category').value = d.category;
+  document.getElementById('edit-ingredients').value = d.ingredients;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+async function saveDish() {
+  const id = document.getElementById('edit-id').value;
+  const name = document.getElementById('edit-name').value.trim();
+  const category = document.getElementById('edit-category').value;
+  const ingredients = document.getElementById('edit-ingredients').value.trim();
+  if (!name || !ingredients) { alert('请填写完整信息'); return; }
+
+  try {
+    if (id) {
+      await api(`/api/admin/dishes/${id}`, { method: 'PUT', body: JSON.stringify({ name, category, ingredients }) });
+    } else {
+      await api('/api/admin/dishes', { method: 'POST', body: JSON.stringify({ name, category, ingredients }) });
+    }
+    closeModal();
+    loadData();
+  } catch (e) { alert('保存失败'); }
+}
+
+async function deleteDish(id, name) {
+  if (!confirm(`确定要删除「${name}」吗？相关的投票也会被删除。`)) return;
+  try {
+    await api(`/api/admin/dishes/${id}`, { method: 'DELETE' });
+    loadData();
+  } catch (e) { alert('删除失败'); }
+}
+
+async function resetVotes() {
+  if (!confirm('确定要重置所有投票吗？此操作不可恢复！')) return;
+  try {
+    await api('/api/admin/reset-votes', { method: 'POST' });
+    loadData();
+  } catch (e) { alert('重置失败'); }
+}
+
+// ── Init ──
+loadData();
+</script>
+</body>
+</html>
