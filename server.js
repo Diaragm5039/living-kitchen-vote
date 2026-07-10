@@ -223,7 +223,7 @@ app.post('/api/vote', async (req, res) => {
     const userName = (user || '').trim();
     if (!userName) return res.status(400).json({ error: '请输入昵称' });
     if (!dish_id) return res.status(400).json({ error: '缺少菜品' });
-    if (!['like', 'dislike', 'no_idea'].includes(vote_type))
+    if (!['accept', 'dislike'].includes(vote_type))
       return res.status(400).json({ error: '无效的投票类型' });
 
     const dish = await pool.query('SELECT id FROM dishes WHERE id = $1', [dish_id]);
@@ -253,24 +253,20 @@ app.get('/api/results', async (req, res) => {
     );
     const results = [];
     for (const d of dishes) {
-      const likes = await pool.query(
-        "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='like'", [d.id]
+      const accepts = await pool.query(
+        "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='accept'", [d.id]
       );
       const dislikes = await pool.query(
         "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='dislike'", [d.id]
       );
-      const noIdeas = await pool.query(
-        "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='no_idea'", [d.id]
-      );
-      const l = parseInt(likes.rows[0].c);
+      const a = parseInt(accepts.rows[0].c);
       const dl = parseInt(dislikes.rows[0].c);
-      const ni = parseInt(noIdeas.rows[0].c);
-      results.push({ ...addEmoji(d), likes: l, dislikes: dl, no_ideas: ni, total: l + dl + ni });
+      results.push({ ...addEmoji(d), accepts: a, dislikes: dl, total: a + dl });
     }
     results.sort((a, b) => {
       const ai = CATEGORIES.indexOf(a.category);
       const bi = CATEGORIES.indexOf(b.category);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || b.likes - a.likes;
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || b.accepts - a.accepts;
     });
     res.json(results);
   } catch (e) {

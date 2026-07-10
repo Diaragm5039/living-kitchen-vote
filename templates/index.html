@@ -20,7 +20,7 @@ input{font:inherit;color:inherit}
 :root{
   --cat-凉菜:#22c55e; --cat-热菜:#f97316; --cat-汤:#14b8a6;
   --cat-主食:#6366f1; --cat-甜品:#ec4899;
-  --like:#22c55e; --dislike:#ef4444; --noidea:#94a3b8;
+  --accept:#22c55e; --dislike:#ef4444;
   --glass:rgba(255,255,255,.06); --glass-border:rgba(255,255,255,.1);
 }
 
@@ -109,11 +109,9 @@ input{font:inherit;color:inherit}
 .card.dragging{transition:none;box-shadow:0 16px 60px rgba(0,0,0,.5)}
 .card.fly-left{animation:flyLeft .4s ease-in forwards}
 .card.fly-right{animation:flyRight .4s ease-in forwards}
-.card.fly-down{animation:flyDown .4s ease-in forwards}
 
 @keyframes flyLeft{to{transform:translateX(-150%) rotate(-30deg);opacity:0}}
 @keyframes flyRight{to{transform:translateX(150%) rotate(30deg);opacity:0}}
-@keyframes flyDown{to{transform:translateY(150%) rotate(5deg);opacity:0}}
 
 /* Card Content */
 .card-emoji{
@@ -148,9 +146,8 @@ input{font:inherit;color:inherit}
   font-size:2rem;font-weight:800;letter-spacing:2px;
   transition:opacity .1s;
 }
-.card-overlay.like{background:rgba(34,197,94,.25);color:#22c55e;border:3px solid rgba(34,197,94,.5)}
+.card-overlay.accept{background:rgba(34,197,94,.25);color:#22c55e;border:3px solid rgba(34,197,94,.5)}
 .card-overlay.dislike{background:rgba(239,68,68,.25);color:#ef4444;border:3px solid rgba(239,68,68,.5)}
-.card-overlay.noidea{background:rgba(148,163,184,.2);color:#94a3b8;border:3px solid rgba(148,163,184,.4)}
 
 /* Action Buttons */
 .action-buttons{
@@ -167,11 +164,8 @@ input{font:inherit;color:inherit}
 .action-btn.dislike-btn:hover,.action-btn.dislike-btn:active{
   border-color:var(--dislike);background:rgba(239,68,68,.15);
 }
-.action-btn.noidea-btn:hover,.action-btn.noidea-btn:active{
-  border-color:var(--noidea);background:rgba(148,163,184,.1);
-}
-.action-btn.like-btn:hover,.action-btn.like-btn:active{
-  border-color:var(--like);background:rgba(34,197,94,.15);
+.action-btn.accept-btn:hover,.action-btn.accept-btn:active{
+  border-color:var(--accept);background:rgba(34,197,94,.15);
 }
 .swipe-hints{
   display:flex;justify-content:space-between;padding:0 20px 20px;
@@ -271,7 +265,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>左滑不喜欢 · 右滑喜欢 · 下滑没想法<br>快来为你心仪的菜品投票吧！</p>
+      <p>左滑不喜欢 · 右滑我接受<br>快来为你心仪的菜品投票吧！</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -286,13 +280,11 @@ input{font:inherit;color:inherit}
     <div class="card-stack" id="card-stack"></div>
     <div class="action-buttons">
       <button class="action-btn dislike-btn" onclick="voteAction('dislike')" title="不喜欢">✕</button>
-      <button class="action-btn noidea-btn" onclick="voteAction('no_idea')" title="没想法">—</button>
-      <button class="action-btn like-btn" onclick="voteAction('like')" title="喜欢">♥</button>
+      <button class="action-btn accept-btn" onclick="voteAction('accept')" title="我接受">✓</button>
     </div>
     <div class="swipe-hints">
       <span>← 不喜欢</span>
-      <span>没想法 ↓</span>
-      <span>喜欢 →</span>
+      <span>我接受 →</span>
     </div>
   </div>
 
@@ -405,9 +397,8 @@ function createCard(dish, depth) {
   const moreTag = moreCount > 0 ? `<span>+${moreCount}</span>` : '';
 
   el.innerHTML = `
-    <div class="card-overlay like">喜欢 ♥</div>
+    <div class="card-overlay accept">我接受 ✓</div>
     <div class="card-overlay dislike">不喜欢 ✕</div>
-    <div class="card-overlay noidea">没想法 ~</div>
     <div class="card-emoji">${dish.emoji}</div>
     <div class="card-name">${dish.name}</div>
     <div class="card-ingredients">${tagHtml}${moreTag}</div>
@@ -449,13 +440,11 @@ function onPointerMove(e) {
 
   // Show overlays
   const threshold = 40;
-  const likeOverlay = activeCard.querySelector('.card-overlay.like');
+  const acceptOverlay = activeCard.querySelector('.card-overlay.accept');
   const dislikeOverlay = activeCard.querySelector('.card-overlay.dislike');
-  const noideaOverlay = activeCard.querySelector('.card-overlay.noidea');
 
-  likeOverlay.style.opacity = currentX > threshold ? Math.min((currentX - threshold) / 60, 1) : 0;
+  acceptOverlay.style.opacity = currentX > threshold ? Math.min((currentX - threshold) / 60, 1) : 0;
   dislikeOverlay.style.opacity = currentX < -threshold ? Math.min((-currentX - threshold) / 60, 1) : 0;
-  noideaOverlay.style.opacity = currentY > threshold ? Math.min((currentY - threshold) / 60, 1) : 0;
 }
 
 function onPointerUp(e) {
@@ -467,14 +456,11 @@ function onPointerUp(e) {
   activeCard.removeEventListener('pointercancel', onPointerUp);
 
   const thresholdX = 80;
-  const thresholdY = 80;
 
   if (currentX > thresholdX) {
-    flyOff('right', 'like');
+    flyOff('right', 'accept');
   } else if (currentX < -thresholdX) {
     flyOff('left', 'dislike');
-  } else if (currentY > thresholdY) {
-    flyOff('down', 'no_idea');
   } else {
     // Snap back
     activeCard.style.transform = 'translate(0,0) rotate(0)';
@@ -503,7 +489,7 @@ function flyOff(direction, voteType) {
 // ── Button Actions ──
 function voteAction(voteType) {
   if (!activeCard || remainingDishes.length === 0) return;
-  const dir = voteType === 'like' ? 'right' : voteType === 'dislike' ? 'left' : 'down';
+  const dir = voteType === 'accept' ? 'right' : 'left';
   flyOff(dir, voteType);
 }
 
@@ -531,7 +517,7 @@ async function showResults() {
       api('/api/stats')
     ]);
 
-    const maxLikes = Math.max(1, ...results.map(r => r.likes));
+    const maxAccepts = Math.max(1, ...results.map(r => r.accepts));
 
     let html = `
       <div class="results-header fade-in">
@@ -559,13 +545,13 @@ async function showResults() {
         </div>`;
 
       for (const d of dishes) {
-        const pct = d.likes > 0 ? (d.likes / maxLikes * 100) : 0;
+        const pct = d.accepts > 0 ? (d.accepts / maxAccepts * 100) : 0;
         html += `
           <div class="result-item">
             <div class="name">${d.name}</div>
             <div class="votes-bar"><div class="bar" style="width:${pct}%"></div></div>
-            <div class="vote-count">${d.likes > 0 ? '♥ ' + d.likes : '-'}</div>
-            <div class="vote-detail">${d.dislikes > 0 ? '✕' + d.dislikes : ''} ${d.no_ideas > 0 ? '~' + d.no_ideas : ''}</div>
+            <div class="vote-count">${d.accepts > 0 ? '✓ ' + d.accepts : '-'}</div>
+            <div class="vote-detail">${d.dislikes > 0 ? '✕' + d.dislikes : ''}</div>
           </div>`;
       }
       html += '</div>';
@@ -587,8 +573,7 @@ async function showResults() {
 document.addEventListener('keydown', (e) => {
   if (document.getElementById('screen-vote').classList.contains('active')) {
     if (e.key === 'ArrowLeft') voteAction('dislike');
-    else if (e.key === 'ArrowRight') voteAction('like');
-    else if (e.key === 'ArrowDown') voteAction('no_idea');
+    else if (e.key === 'ArrowRight') voteAction('accept');
   }
 });
 
