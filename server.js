@@ -432,6 +432,16 @@ async function main() {
     await pool.query('SELECT 1');
     console.log('  Database connected');
     await seedDishes();
+
+    // Auto-create user_dietary table if missing
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_dietary (
+        user_name TEXT PRIMARY KEY,
+        disliked_ingredients TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('  Tables ready');
   } catch (e) {
     console.error('  Database error:', e.message);
   }
