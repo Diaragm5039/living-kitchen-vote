@@ -336,12 +336,13 @@ input{font:inherit;color:inherit}
   <!-- Ingredient Picker Screen -->
   <div id="screen-ingredients" class="screen ingredient-picker">
     <h2>🚫 有没有不吃的食材？</h2>
-    <p class="picker-sub">选好后，含这些食材的菜品会为你标注提醒</p>
+    <p class="picker-sub">选好后，含这些食材的菜品会为你标注提醒，偏好也会被记录</p>
     <div class="ingredient-chips" id="ingredient-chips"></div>
     <div class="custom-ingredient-wrap">
-      <input id="custom-ingredient" type="text" placeholder="其他食材..." maxlength="10">
+      <input id="custom-ingredient" type="text" placeholder="其他食材..." maxlength="20">
       <button class="custom-add-btn" onclick="addCustomIngredient()">添加</button>
     </div>
+    <p class="picker-hint" style="margin-top:-10px">多项用顿号隔开，如：花椒、八角</p>
     <p class="picker-hint">可跳过，直接开始投票</p>
     <button class="btn-primary" onclick="confirmIngredients()">开始投票</button>
   </div>
@@ -450,20 +451,34 @@ function addCustomIngredient() {
   const input = document.getElementById('custom-ingredient');
   const val = input.value.trim();
   if (!val) return;
-  if (!dislikedIngredients.includes(val)) {
-    dislikedIngredients.push(val);
-    const container = document.getElementById('ingredient-chips');
-    const chip = document.createElement('button');
-    chip.className = 'ingredient-chip selected';
-    chip.textContent = val;
-    chip.onclick = function() { toggleIngredient(this, val); };
-    container.appendChild(chip);
+  const parts = val.split('、').map(s => s.trim()).filter(Boolean);
+  const container = document.getElementById('ingredient-chips');
+  for (const name of parts) {
+    if (!dislikedIngredients.includes(name)) {
+      dislikedIngredients.push(name);
+      const chip = document.createElement('button');
+      chip.className = 'ingredient-chip selected';
+      chip.textContent = name;
+      chip.onclick = function() { toggleIngredient(this, name); };
+      container.appendChild(chip);
+    }
   }
   input.value = '';
   input.focus();
 }
 
-function confirmIngredients() {
+async function confirmIngredients() {
+  // Save dietary preferences
+  if (dislikedIngredients.length > 0) {
+    try {
+      await api('/api/preferences', {
+        method: 'POST',
+        body: JSON.stringify({ user: userName, disliked_ingredients: dislikedIngredients.join('、') })
+      });
+    } catch (e) {
+      console.error('Failed to save preferences:', e);
+    }
+  }
   showScreen('vote');
   renderCardStack();
   updateProgress();

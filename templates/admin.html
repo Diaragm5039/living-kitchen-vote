@@ -122,6 +122,38 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
 .empty{text-align:center;padding:60px 20px;color:#64748b}
 .empty .icon{font-size:2.5rem;margin-bottom:12px}
 
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;margin-bottom:24px}
+.tab-btn{
+  padding:8px 18px;border-radius:10px;font-size:.85rem;font-weight:500;
+  background:var(--glass);border:1px solid var(--glass-border);
+  color:#94a3b8;transition:all .2s;cursor:pointer;
+}
+.tab-btn.active{
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  border-color:transparent;color:#fff;
+  box-shadow:0 2px 10px rgba(99,102,241,.3);
+}
+.tab-btn:active{transform:scale(.97)}
+
+/* ── Dietary Table ── */
+.dietary-table{width:100%;border-collapse:collapse}
+.dietary-table th{
+  text-align:left;font-size:.75rem;color:#94a3b8;font-weight:600;
+  padding:8px 12px;border-bottom:1px solid var(--glass-border);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.dietary-table td{
+  padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);
+  font-size:.85rem;vertical-align:middle;
+}
+.dietary-table tr:hover td{background:rgba(255,255,255,.02)}
+.dietary-tags span{
+  display:inline-block;padding:2px 8px;margin:2px;border-radius:12px;
+  background:rgba(239,68,68,.1);color:#ef4444;font-size:.75rem;
+  border:1px solid rgba(239,68,68,.2);
+}
+
 /* ── Responsive ── */
 @media(max-width:640px){
   .dish-table .ingredients-col{display:none}
@@ -132,41 +164,55 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
 </head>
 <body>
 <div class="container">
-  <!-- Admin Panel -->
+  <!-- Header -->
   <div class="header">
-    <h1>🍽 菜品管理后台</h1>
+    <h1>🍽 管理后台</h1>
     <div class="header-actions">
-      <button class="btn btn-ghost" onclick="openAddModal()">+ 添加菜品</button>
+      <button class="btn btn-ghost" id="btn-add-dish" onclick="openAddModal()">+ 添加菜品</button>
       <button class="btn btn-danger btn-sm" onclick="resetVotes()">重置投票</button>
       <button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>
     </div>
   </div>
 
-  <div class="stats-bar" id="stats-bar">
-    <div class="stat-card"><div class="num" id="stat-users">-</div><div class="label">参与人数</div></div>
-    <div class="stat-card"><div class="num" id="stat-dishes">-</div><div class="label">菜品总数</div></div>
-    <div class="stat-card"><div class="num" id="stat-votes">-</div><div class="label">投票总数</div></div>
-    <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">接受总数</div></div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-dishes" onclick="switchView('dishes')">🍽 菜品</button>
+    <button class="tab-btn" id="tab-dietary" onclick="switchView('dietary')">🚫 忌口</button>
   </div>
 
-  <div class="toolbar">
-    <select id="filter-cat" onchange="renderTable()">
-      <option value="">全部分类</option>
-      <option value="凉菜">🥗 凉菜</option>
-      <option value="热菜">🔥 热菜</option>
-      <option value="汤">🍲 汤</option>
-      <option value="主食">🍚 主食</option>
-      <option value="甜品">🍰 甜品</option>
-    </select>
-    <input type="text" id="filter-search" placeholder="搜索菜品..." oninput="renderTable()">
-    <select id="sort-by" onchange="renderTable()">
-      <option value="category">按分类排序</option>
-      <option value="accepts">按接受数排序</option>
-      <option value="name">按名称排序</option>
-    </select>
+  <!-- Dishes View -->
+  <div id="dishes-view">
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card"><div class="num" id="stat-users">-</div><div class="label">参与人数</div></div>
+      <div class="stat-card"><div class="num" id="stat-dishes">-</div><div class="label">菜品总数</div></div>
+      <div class="stat-card"><div class="num" id="stat-votes">-</div><div class="label">投票总数</div></div>
+      <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">接受总数</div></div>
+    </div>
+
+    <div class="toolbar">
+      <select id="filter-cat" onchange="renderTable()">
+        <option value="">全部分类</option>
+        <option value="凉菜">🥗 凉菜</option>
+        <option value="热菜">🔥 热菜</option>
+        <option value="汤">🍲 汤</option>
+        <option value="主食">🍚 主食</option>
+        <option value="甜品">🍰 甜品</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="搜索菜品..." oninput="renderTable()">
+      <select id="sort-by" onchange="renderTable()">
+        <option value="category">按分类排序</option>
+        <option value="accepts">按接受数排序</option>
+        <option value="name">按名称排序</option>
+      </select>
+    </div>
+
+    <div id="table-container"></div>
   </div>
 
-  <div id="table-container"></div>
+  <!-- Dietary View -->
+  <div id="dietary-view" style="display:none">
+    <div id="dietary-container"></div>
+  </div>
 </div>
 
 <!-- Edit/Add Modal -->
@@ -230,6 +276,7 @@ async function loadData() {
   document.getElementById('stat-votes').textContent = s.total_votes;
   document.getElementById('stat-likes').textContent = r.reduce((a, b) => a + b.accepts, 0);
   renderTable();
+  loadDietary();
 }
 
 // ── Render Table ──
@@ -334,6 +381,54 @@ async function resetVotes() {
     await api('/api/admin/reset-votes', { method: 'POST' });
     loadData();
   } catch (e) { alert('重置失败'); }
+}
+
+// ── View Switching ──
+let currentView = 'dishes';
+let dietaryData = [];
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('tab-dishes').classList.toggle('active', view === 'dishes');
+  document.getElementById('tab-dietary').classList.toggle('active', view === 'dietary');
+  document.getElementById('dishes-view').style.display = view === 'dishes' ? '' : 'none';
+  document.getElementById('dietary-view').style.display = view === 'dietary' ? '' : 'none';
+  document.getElementById('btn-add-dish').style.display = view === 'dishes' ? '' : 'none';
+
+  if (view === 'dietary') renderDietary();
+}
+
+async function loadDietary() {
+  const data = await api('/api/admin/dietary');
+  if (data) dietaryData = data;
+}
+
+function renderDietary() {
+  const container = document.getElementById('dietary-container');
+  if (dietaryData.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="icon">🚫</div><p>暂无忌口记录</p></div>';
+    return;
+  }
+  let html = `<table class="dietary-table">
+    <thead><tr><th>用户</th><th>忌口食材</th><th>操作</th></tr></thead><tbody>`;
+  for (const d of dietaryData) {
+    const tags = d.disliked_ingredients.split('、').map(i => `<span>${i}</span>`).join('');
+    html += `<tr>
+      <td style="font-weight:500">${d.user_name}</td>
+      <td class="dietary-tags">${tags}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteDietary('${d.user_name}')">删除</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function deleteDietary(userName) {
+  if (!confirm(`确定要删除「${userName}」的忌口记录吗？`)) return;
+  try {
+    await api('/api/admin/dietary/' + encodeURIComponent(userName), { method: 'DELETE' });
+    loadDietary().then(() => { if (currentView === 'dietary') renderDietary(); });
+  } catch (e) { alert('删除失败'); }
 }
 
 // ── Init ──

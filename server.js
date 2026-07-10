@@ -367,6 +367,49 @@ app.post('/api/admin/reset-votes', requireAdmin, async (req, res) => {
 });
 
 // ════════════════════════════════════════════
+//  API: Dietary Preferences
+// ════════════════════════════════════════════
+
+app.post('/api/preferences', async (req, res) => {
+  try {
+    const { user, disliked_ingredients } = req.body;
+    const userName = (user || '').trim();
+    if (!userName) return res.status(400).json({ error: '缺少用户名' });
+    const ingredients = (disliked_ingredients || '').trim();
+
+    await pool.query(
+      `INSERT INTO user_dietary (user_name, disliked_ingredients)
+       VALUES ($1, $2)
+       ON CONFLICT (user_name) DO UPDATE SET disliked_ingredients = $2`,
+      [userName, ingredients]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/admin/dietary', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT user_name, disliked_ingredients, created_at FROM user_dietary ORDER BY created_at DESC'
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/admin/dietary/:userName', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM user_dietary WHERE user_name = $1', [req.params.userName]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ════════════════════════════════════════════
 //  Page routes
 // ════════════════════════════════════════════
 
