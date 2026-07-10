@@ -91,8 +91,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
   display:inline-block;padding:3px 10px;border-radius:20px;
   font-size:.7rem;font-weight:600;
 }
-.vote-nums{font-size:.75rem;color:#94a3b8}
-.vote-nums .likes{color:#22c55e;font-weight:600}
+.vote-nums{font-size:.8rem;color:#94a3b8;font-weight:500}
 .actions-cell{display:flex;gap:4px}
 
 /* ── Modal ── */
@@ -146,7 +145,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
     <div class="stat-card"><div class="num" id="stat-users">-</div><div class="label">参与人数</div></div>
     <div class="stat-card"><div class="num" id="stat-dishes">-</div><div class="label">菜品总数</div></div>
     <div class="stat-card"><div class="num" id="stat-votes">-</div><div class="label">投票总数</div></div>
-    <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">喜欢总数</div></div>
+    <div class="stat-card"><div class="num" id="stat-dislikes">-</div><div class="label">不喜欢总数</div></div>
   </div>
 
   <div class="toolbar">
@@ -161,7 +160,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
     <input type="text" id="filter-search" placeholder="搜索菜品..." oninput="renderTable()">
     <select id="sort-by" onchange="renderTable()">
       <option value="category">按分类排序</option>
-      <option value="likes">按喜欢数排序</option>
+      <option value="likes">按不喜欢数排序</option>
       <option value="name">按名称排序</option>
     </select>
   </div>
@@ -228,7 +227,7 @@ async function loadData() {
   document.getElementById('stat-users').textContent = s.total_users;
   document.getElementById('stat-dishes').textContent = s.total_dishes;
   document.getElementById('stat-votes').textContent = s.total_votes;
-  document.getElementById('stat-likes').textContent = r.reduce((a, b) => a + b.likes, 0);
+  document.getElementById('stat-dislikes').textContent = r.reduce((a, b) => a + b.dislikes, 0);
   renderTable();
 }
 
@@ -242,7 +241,7 @@ function renderTable() {
   if (cat) data = data.filter(d => d.category === cat);
   if (search) data = data.filter(d => d.name.toLowerCase().includes(search) || d.ingredients.toLowerCase().includes(search));
 
-  if (sort === 'likes') data.sort((a, b) => b.likes - a.likes);
+  if (sort === 'likes') data.sort((a, b) => b.dislikes - a.dislikes);
   else if (sort === 'name') data.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
   else data.sort((a, b) => {
     const cats = ['凉菜','热菜','汤','主食','甜品'];
@@ -256,7 +255,7 @@ function renderTable() {
 
   let html = `<table class="dish-table">
     <thead><tr>
-      <th>菜品</th><th>分类</th><th class="ingredients-col">食材</th><th>投票</th><th>操作</th>
+      <th>菜品</th><th>分类</th><th class="ingredients-col">食材</th><th>不喜欢</th><th>操作</th>
     </tr></thead><tbody>`;
 
   for (const d of data) {
@@ -266,7 +265,7 @@ function renderTable() {
       <td style="font-weight:500">${d.emoji} ${d.name}</td>
       <td><span class="cat-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${d.category}</span></td>
       <td class="ingredients-col" style="color:#94a3b8;font-size:.75rem">${ingShort}</td>
-      <td class="vote-nums"><span class="likes">♥${d.likes}</span> ✕${d.dislikes} ~${d.no_ideas}</td>
+      <td class="vote-nums">${d.dislikes > 0 ? '✕ ' + d.dislikes : '-'}</td>
       <td><div class="actions-cell">
         <button class="btn btn-ghost btn-sm" onclick="openEditModal(${d.id})">编辑</button>
         <button class="btn btn-danger btn-sm" onclick="deleteDish(${d.id},'${d.name}')">删除</button>
