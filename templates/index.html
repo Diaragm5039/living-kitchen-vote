@@ -20,7 +20,7 @@ input{font:inherit;color:inherit}
 :root{
   --cat-凉菜:#22c55e; --cat-热菜:#f97316; --cat-汤:#14b8a6;
   --cat-主食:#6366f1; --cat-甜品:#ec4899;
-  --accept:#22c55e; --dislike:#ef4444;
+  --accept:#22c55e; --dislike:#ef4444; --warn:#f59e0b;
   --glass:rgba(255,255,255,.06); --glass-border:rgba(255,255,255,.1);
 }
 
@@ -244,6 +244,66 @@ input{font:inherit;color:inherit}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 
+/* ═══ Ingredient Picker Screen ═══ */
+.ingredient-picker{
+  justify-content:center;align-items:center;gap:20px;padding:20px 0;
+}
+.ingredient-picker h2{
+  font-size:1.3rem;font-weight:700;text-align:center;
+}
+.ingredient-picker .picker-sub{
+  color:#94a3b8;font-size:.85rem;text-align:center;margin-top:-8px;
+}
+.ingredient-chips{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+  max-width:360px;padding:4px 0;
+}
+.ingredient-chip{
+  padding:8px 18px;border-radius:24px;font-size:.85rem;font-weight:500;
+  background:var(--glass);border:1px solid var(--glass-border);
+  color:#cbd5e1;transition:all .2s;
+}
+.ingredient-chip:active{transform:scale(.95)}
+.ingredient-chip.selected{
+  background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);
+  color:#ef4444;font-weight:600;
+}
+.custom-ingredient-wrap{
+  display:flex;gap:8px;width:100%;max-width:300px;
+}
+.custom-ingredient-wrap input{
+  flex:1;padding:10px 16px;border-radius:14px;
+  background:var(--glass);border:1px solid var(--glass-border);
+  color:#fff;font-size:.85rem;outline:none;
+}
+.custom-ingredient-wrap input:focus{border-color:#818cf8}
+.custom-add-btn{
+  padding:8px 16px;border-radius:14px;
+  background:var(--glass);border:1px solid var(--glass-border);
+  font-size:.85rem;color:#94a3b8;transition:all .2s;
+}
+.custom-add-btn:active{background:rgba(255,255,255,.1)}
+.picker-hint{font-size:.7rem;color:#475569;text-align:center}
+
+/* ═══ Card Warning (disliked ingredients) ═══ */
+.card.has-disliked{
+  border-color:rgba(239,68,68,.35);
+  box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 0 1px rgba(239,68,68,.15);
+}
+.card-warning{
+  position:absolute;top:0;left:0;right:0;
+  padding:6px 12px;font-size:.7rem;font-weight:600;
+  color:#ef4444;background:rgba(239,68,68,.08);
+  border-bottom:1px solid rgba(239,68,68,.12);
+  z-index:5;letter-spacing:.3px;
+}
+.card-ingredients .disliked-tag{
+  background:rgba(239,68,68,.2) !important;
+  color:#ef4444 !important;
+  border-color:rgba(239,68,68,.4) !important;
+  font-weight:700;
+}
+
 /* ═══ Responsive ═══ */
 @media(max-height:700px){
   .card-emoji{padding-top:16px;font-size:2.8rem}
@@ -271,6 +331,19 @@ input{font:inherit;color:inherit}
       </div>
       <button class="btn-primary" id="btn-start" onclick="startVoting()">开始投票</button>
     </div>
+  </div>
+
+  <!-- Ingredient Picker Screen -->
+  <div id="screen-ingredients" class="screen ingredient-picker">
+    <h2>🚫 有没有不吃的食材？</h2>
+    <p class="picker-sub">选好后，含这些食材的菜品会为你标注提醒</p>
+    <div class="ingredient-chips" id="ingredient-chips"></div>
+    <div class="custom-ingredient-wrap">
+      <input id="custom-ingredient" type="text" placeholder="其他食材..." maxlength="10">
+      <button class="custom-add-btn" onclick="addCustomIngredient()">添加</button>
+    </div>
+    <p class="picker-hint">可跳过，直接开始投票</p>
+    <button class="btn-primary" onclick="confirmIngredients()">开始投票</button>
   </div>
 
   <!-- Vote Screen -->
@@ -302,6 +375,10 @@ let totalDishes = 0;
 let isDragging = false;
 let startX = 0, startY = 0, currentX = 0, currentY = 0;
 let activeCard = null;
+let dislikedIngredients = [];
+
+// ── Common Disliked Ingredients ──
+const COMMON_INGREDIENTS = ['香菜','彩椒','青椒','韭菜','大葱','葱','迷迭香','口蘑','蘑菇'];
 
 // ── API ──
 async function api(url, opts) {
@@ -339,15 +416,69 @@ async function startVoting() {
     if (remainingDishes.length === 0) {
       showResults();
     } else {
-      showScreen('vote');
-      renderCardStack();
-      updateProgress();
+      showScreen('ingredients');
+      renderIngredientChips();
     }
   } catch (e) {
     alert('加载失败，请刷新重试');
   }
   btn.disabled = false;
   btn.textContent = '开始投票';
+}
+
+// ── Ingredient Picker ──
+function renderIngredientChips() {
+  const container = document.getElementById('ingredient-chips');
+  container.innerHTML = COMMON_INGREDIENTS.map(ing => {
+    const sel = dislikedIngredients.includes(ing) ? ' selected' : '';
+    return `<button class="ingredient-chip${sel}" onclick="toggleIngredient(this,'${ing}')">${ing}</button>`;
+  }).join('');
+}
+
+function toggleIngredient(el, name) {
+  const idx = dislikedIngredients.indexOf(name);
+  if (idx >= 0) {
+    dislikedIngredients.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    dislikedIngredients.push(name);
+    el.classList.add('selected');
+  }
+}
+
+function addCustomIngredient() {
+  const input = document.getElementById('custom-ingredient');
+  const val = input.value.trim();
+  if (!val) return;
+  if (!dislikedIngredients.includes(val)) {
+    dislikedIngredients.push(val);
+    const container = document.getElementById('ingredient-chips');
+    const chip = document.createElement('button');
+    chip.className = 'ingredient-chip selected';
+    chip.textContent = val;
+    chip.onclick = function() { toggleIngredient(this, val); };
+    container.appendChild(chip);
+  }
+  input.value = '';
+  input.focus();
+}
+
+function confirmIngredients() {
+  showScreen('vote');
+  renderCardStack();
+  updateProgress();
+}
+
+// ── Disliked Ingredient Match ──
+function hasDislikedIngredient(dishIngredients) {
+  if (dislikedIngredients.length === 0) return false;
+  const parts = dishIngredients.split('、').map(s => s.trim());
+  for (const part of parts) {
+    for (const d of dislikedIngredients) {
+      if (part.includes(d) || d.includes(part)) return true;
+    }
+  }
+  return false;
 }
 
 // ── Progress ──
@@ -390,15 +521,36 @@ function createCard(dish, depth) {
   el.style.transform = `translateY(${ty}px) scale(${scale})`;
   el.style.zIndex = 10 - depth;
 
-  // Build ingredient tags (max 8)
-  const ingredients = dish.ingredients.split('、').slice(0, 8);
-  const tagHtml = ingredients.map(t => `<span>${t.trim()}</span>`).join('');
-  const moreCount = dish.ingredients.split('、').length - 8;
+  // Build ingredient tags with disliked ingredient highlighting
+  const allIngredients = dish.ingredients.split('、').map(s => s.trim()).filter(Boolean);
+  const dislikedSet = new Set();
+  if (dislikedIngredients.length > 0) {
+    for (const ing of allIngredients) {
+      for (const d of dislikedIngredients) {
+        if (ing.includes(d) || d.includes(ing)) { dislikedSet.add(ing); break; }
+      }
+    }
+  }
+  // Disliked ingredients first
+  const sorted = [
+    ...allIngredients.filter(i => dislikedSet.has(i)),
+    ...allIngredients.filter(i => !dislikedSet.has(i))
+  ].slice(0, 8);
+  const moreCount = allIngredients.length - 8;
   const moreTag = moreCount > 0 ? `<span>+${moreCount}</span>` : '';
+
+  const tagHtml = sorted.map(t => {
+    const cls = dislikedSet.has(t) ? ' disliked-tag' : '';
+    return `<span class="${cls}">${t}</span>`;
+  }).join('');
+
+  const hasDisliked = dislikedSet.size > 0;
+  if (hasDisliked) el.classList.add('has-disliked');
 
   el.innerHTML = `
     <div class="card-overlay accept">我接受 ✓</div>
     <div class="card-overlay dislike">不喜欢 ✕</div>
+    ${hasDisliked ? '<div class="card-warning">⚠ 含有你不喜欢的食材</div>' : ''}
     <div class="card-emoji">${dish.emoji}</div>
     <div class="card-name">${dish.name}</div>
     <div class="card-ingredients">${tagHtml}${moreTag}</div>
@@ -580,6 +732,9 @@ document.addEventListener('keydown', (e) => {
 // ── Enter to Start ──
 document.getElementById('nickname-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') startVoting();
+});
+document.getElementById('custom-ingredient').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addCustomIngredient();
 });
 </script>
 </body>
