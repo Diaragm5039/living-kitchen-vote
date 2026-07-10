@@ -242,6 +242,35 @@ app.post('/api/vote', async (req, res) => {
   }
 });
 
+app.post('/api/vote/bulk', async (req, res) => {
+  try {
+    const { user, dislikes } = req.body;
+    const userName = (user || '').trim();
+    if (!userName) return res.status(400).json({ error: '请输入昵称' });
+    if (!Array.isArray(dislikes))
+      return res.status(400).json({ error: '无效的数据格式' });
+
+    // Clear all existing votes for this user
+    await pool.query('DELETE FROM votes WHERE user_name = $1', [userName]);
+
+    // Insert only disliked votes
+    if (dislikes.length > 0) {
+      const validIds = dislikes.filter(id => Number.isInteger(id) && id > 0);
+      if (validIds.length > 0) {
+        const placeholders = validIds.map((_, i) => `($1, $${i + 2}, 'dislike')`).join(', ');
+        await pool.query(
+          `INSERT INTO votes (user_name, dish_id, vote_type) VALUES ${placeholders}`,
+          [userName, ...validIds]
+        );
+      }
+    }
+
+    res.json({ ok: true, disliked_count: dislikes.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ════════════════════════════════════════════
 //  API: Results
 // ════════════════════════════════════════════
