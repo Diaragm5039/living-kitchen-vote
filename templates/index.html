@@ -105,66 +105,16 @@ input{font:inherit;color:inherit}
 }
 .progress-text{font-size:.75rem;color:#94a3b8;text-align:center;flex-shrink:0;padding:4px 12px}
 
-/* Side Drop Zones */
-.drop-zone{
-  position:absolute;top:60px;
-  width:72px;height:72px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  border-radius:16px;
-  font-size:.7rem;font-weight:700;letter-spacing:1px;
-  opacity:.35;transition:all .3s ease;
-  pointer-events:none;z-index:50;
-}
-.drop-zone .zone-label{
-  font-size:1.4rem;font-weight:800;letter-spacing:2px;
-  opacity:0;transform:scale(.5);
-  transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);
-  text-shadow:0 2px 16px rgba(0,0,0,.6);
-  position:absolute;
-  white-space:nowrap;
-}
-.drop-zone.dislike-zone{
-  left:12px;
-  background:rgba(239,68,68,.08);color:#ef4444;
-  border:2px solid rgba(239,68,68,.15);
-}
-.drop-zone.dislike-zone .zone-label{color:#ef4444}
-.drop-zone.like-zone{
-  right:12px;
-  background:rgba(34,197,94,.08);color:#22c55e;
-  border:2px solid rgba(34,197,94,.15);
-}
-.drop-zone.like-zone .zone-label{color:#22c55e}
-
-/* Active state — zone grows and label floats up */
-.drop-zone.active{
-  opacity:1;
-  width:90px;height:90px;
-}
-.drop-zone.dislike-zone.active{
-  background:rgba(239,68,68,.2);
-  border-color:rgba(239,68,68,.4);
-  box-shadow:0 0 30px rgba(239,68,68,.25);
-}
-.drop-zone.like-zone.active{
-  background:rgba(34,197,94,.2);
-  border-color:rgba(34,197,94,.4);
-  box-shadow:0 0 30px rgba(34,197,94,.25);
-}
-.drop-zone.active .zone-label{
-  opacity:1;transform:scale(1);
-}
-
 /* Card Grid */
 .card-grid{
-  flex:1;overflow-y:auto;padding:8px 16px 12px;
+  flex:1;overflow-y:auto;padding:8px 12px 12px;
   display:grid;grid-template-columns:1fr 1fr;gap:10px;
   align-content:start;
 }
 
 /* Submit Button */
 .submit-bar{
-  flex-shrink:0;padding:8px 16px 16px;
+  flex-shrink:0;padding:8px 12px 16px;
 }
 .submit-btn{
   width:100%;padding:14px;border-radius:14px;
@@ -177,21 +127,73 @@ input{font:inherit;color:inherit}
 
 /* Compact Card */
 .card{
+  position:relative;
   background:#1e1b2e;border-radius:14px;
-  border:1px solid rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.08);
   overflow:hidden;user-select:none;
-  touch-action:pan-y;cursor:grab;
-  transition:transform .2s,box-shadow .2s,opacity .2s;
+  cursor:pointer;
+  transition:border-color .25s,box-shadow .25s,transform .15s;
 }
-.card:active{cursor:grabbing}
-.card.dragging{
-  position:fixed;z-index:200;
-  box-shadow:0 16px 48px rgba(0,0,0,.6);
-  opacity:.92;cursor:grabbing;
-  transition:none;
+.card:active{transform:scale(.97)}
+
+/* Selected state — show vote buttons overlay */
+.card.selected{
+  border-color:rgba(129,140,248,.5);
+  box-shadow:0 0 0 2px rgba(129,140,248,.15);
 }
-.card.snap-back{
-  transition:transform .3s ease,box-shadow .3s ease;
+.card-vote-overlay{
+  position:absolute;inset:0;
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(15,10,26,.85);
+  backdrop-filter:blur(4px);
+  z-index:10;
+  border-radius:12px;
+}
+.card.selected .card-vote-overlay{display:flex}
+.card-vote-btn{
+  width:80%;padding:10px;border-radius:12px;
+  font-size:.85rem;font-weight:600;
+  transition:transform .15s,box-shadow .15s;
+  text-align:center;
+}
+.card-vote-btn:active{transform:scale(.95)}
+.card-vote-btn.btn-like{
+  background:rgba(34,197,94,.15);color:#22c55e;
+  border:1px solid rgba(34,197,94,.3);
+}
+.card-vote-btn.btn-like:active{background:rgba(34,197,94,.3)}
+.card-vote-btn.btn-dislike{
+  background:rgba(239,68,68,.12);color:#ef4444;
+  border:1px solid rgba(239,68,68,.25);
+}
+.card-vote-btn.btn-dislike:active{background:rgba(239,68,68,.25)}
+
+/* Voted states */
+.card.voted-like{
+  border-color:rgba(34,197,94,.5);
+  box-shadow:0 0 12px rgba(34,197,94,.15);
+}
+.card.voted-like::after{
+  content:'♥ 喜欢';
+  position:absolute;top:6px;right:6px;
+  padding:2px 8px;border-radius:8px;
+  font-size:.6rem;font-weight:700;
+  background:rgba(34,197,94,.2);color:#22c55e;
+  z-index:5;
+}
+.card.voted-dislike{
+  border-color:rgba(239,68,68,.4);
+  box-shadow:0 0 12px rgba(239,68,68,.12);
+  opacity:.7;
+}
+.card.voted-dislike::after{
+  content:'✕ 不喜欢';
+  position:absolute;top:6px;right:6px;
+  padding:2px 8px;border-radius:8px;
+  font-size:.6rem;font-weight:700;
+  background:rgba(239,68,68,.15);color:#ef4444;
+  z-index:5;
 }
 
 /* Compact Card Content */
@@ -440,7 +442,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>拖拽菜品到左侧不喜欢 · 右侧我喜欢<br>未操作的菜品视为中立，完成后点提交</p>
+      <p>点击菜品选择喜欢或不喜欢<br>未操作的菜品视为中立，完成后点提交</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -467,12 +469,6 @@ input{font:inherit;color:inherit}
   <div id="screen-vote" class="screen vote-screen">
     <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
     <div class="progress-text" id="progress-text">0 / 0</div>
-    <div class="drop-zone dislike-zone" id="zone-dislike">
-      <span class="zone-label">不喜欢</span>
-    </div>
-    <div class="drop-zone like-zone" id="zone-like">
-      <span class="zone-label">我喜欢</span>
-    </div>
     <div class="card-grid" id="card-grid"></div>
     <div class="submit-bar">
       <button class="submit-btn" id="btn-submit" onclick="submitAll()">提交</button>
@@ -490,9 +486,7 @@ let allDishes = [];
 let remainingDishes = [];
 let votedCount = 0;
 let totalDishes = 0;
-let isDragging = false;
-let startX = 0, startY = 0;
-let activeCard = null;
+let selectedCard = null;
 let dislikedIngredients = [];
 
 // ── Common Disliked Ingredients ──
@@ -598,7 +592,7 @@ async function confirmIngredients() {
   }
   showScreen('vote');
   renderCardGrid();
-  updateProgress();
+  updateVoteProgress();
 }
 
 // ── Disliked Ingredient Match ──
@@ -611,15 +605,6 @@ function hasDislikedIngredient(dishIngredients) {
     }
   }
   return false;
-}
-
-// ── Progress ──
-function updateProgress() {
-  const done = votedCount;
-  const total = totalDishes;
-  const pct = total > 0 ? (done / total * 100) : 0;
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = `${done} / ${total}`;
 }
 
 // ── Card Grid ──
@@ -678,200 +663,66 @@ function createCard(dish) {
         ${dish.category}
       </span>
     </div>
+    <div class="card-vote-overlay">
+      <button class="card-vote-btn btn-like" onclick="event.stopPropagation();voteCard(this.closest('.card'),'accept')">♥ 喜欢</button>
+      <button class="card-vote-btn btn-dislike" onclick="event.stopPropagation();voteCard(this.closest('.card'),'dislike')">✕ 不喜欢</button>
+    </div>
   `;
 
-  // Drag handlers
-  el.addEventListener('pointerdown', onDragStart);
+  // Click to select/deselect
+  el.addEventListener('click', () => onCardClick(el));
   return el;
 }
 
-// ── Drag to Zone ──
-let dragThresholdMet = false;
-
-function onDragStart(e) {
-  const card = e.currentTarget;
-  activeCard = card;
-  isDragging = false;
-  dragThresholdMet = false;
-  startX = e.clientX;
-  startY = e.clientY;
-
-  card.setPointerCapture(e.pointerId);
-  card.addEventListener('pointermove', onDragMove);
-  card.addEventListener('pointerup', onDragEnd);
-  card.addEventListener('pointercancel', onDragEnd);
-}
-
-function onDragMove(e) {
-  if (!activeCard) return;
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
-
-  // Threshold: only engage drag if horizontal movement > 12px
-  if (!dragThresholdMet) {
-    if (Math.abs(dx) < 12) return;
-    // If vertical movement dominates, cancel (user is scrolling)
-    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
-      cancelDrag();
-      return;
-    }
-    dragThresholdMet = true;
-    isDragging = true;
-
-    // Now fix card position for dragging
-    const rect = activeCard.getBoundingClientRect();
-    activeCard.style.position = 'fixed';
-    activeCard.style.left = rect.left + 'px';
-    activeCard.style.top = rect.top + 'px';
-    activeCard.style.width = rect.width + 'px';
-    activeCard.style.zIndex = '200';
-    activeCard.classList.add('dragging');
-  }
-
-  activeCard.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`;
-
-  // Proximity-based zone activation with distance-based label reveal
-  const zoneDislike = document.getElementById('zone-dislike');
-  const zoneLike = document.getElementById('zone-like');
-  const dzLeft = zoneDislike.getBoundingClientRect();
-  const dzRight = zoneLike.getBoundingClientRect();
-
-  // Calculate distance from pointer to zone center
-  const lcx = (dzLeft.left + dzLeft.right) / 2;
-  const lcy = (dzLeft.top + dzLeft.bottom) / 2;
-  const distLeft = Math.hypot(e.clientX - lcx, e.clientY - lcy);
-
-  const rcx = (dzRight.left + dzRight.right) / 2;
-  const rcy = (dzRight.top + dzRight.bottom) / 2;
-  const distRight = Math.hypot(e.clientX - rcx, e.clientY - rcy);
-
-  const PROXIMITY = 200; // px range where label starts appearing
-  const ACTIVATE = 80;   // px range where zone is "active" (accepts drop)
-
-  // Left zone
-  if (distLeft < ACTIVATE) {
-    zoneDislike.classList.add('active');
-  } else {
-    zoneDislike.classList.remove('active');
-  }
-  // Proximity label reveal (fade in as card approaches)
-  const lLabel = zoneDislike.querySelector('.zone-label');
-  if (distLeft < PROXIMITY) {
-    const t = 1 - (distLeft - ACTIVATE) / (PROXIMITY - ACTIVATE);
-    const scale = 0.5 + 0.5 * Math.max(0, t);
-    lLabel.style.opacity = Math.max(0, t);
-    lLabel.style.transform = `scale(${scale})`;
-  } else {
-    lLabel.style.opacity = 0;
-    lLabel.style.transform = 'scale(.5)';
-  }
-
-  // Right zone
-  if (distRight < ACTIVATE) {
-    zoneLike.classList.add('active');
-  } else {
-    zoneLike.classList.remove('active');
-  }
-  const rLabel = zoneLike.querySelector('.zone-label');
-  if (distRight < PROXIMITY) {
-    const t = 1 - (distRight - ACTIVATE) / (PROXIMITY - ACTIVATE);
-    const scale = 0.5 + 0.5 * Math.max(0, t);
-    rLabel.style.opacity = Math.max(0, t);
-    rLabel.style.transform = `scale(${scale})`;
-  } else {
-    rLabel.style.opacity = 0;
-    rLabel.style.transform = 'scale(.5)';
-  }
-}
-
-function cancelDrag() {
-  if (!activeCard) return;
-  activeCard.removeEventListener('pointermove', onDragMove);
-  activeCard.removeEventListener('pointerup', onDragEnd);
-  activeCard.removeEventListener('pointercancel', onDragEnd);
-  activeCard = null;
-  isDragging = false;
-  dragThresholdMet = false;
-}
-
-function onDragEnd(e) {
-  if (!isDragging || !activeCard) {
-    // Threshold not met — just clean up listeners
-    if (activeCard) cancelDrag();
+// ── Click to Vote ──
+function onCardClick(card) {
+  // If clicking the same card that's already selected, deselect it
+  if (selectedCard === card) {
+    card.classList.remove('selected');
+    selectedCard = null;
     return;
   }
-  isDragging = false;
-  activeCard.removeEventListener('pointermove', onDragMove);
-  activeCard.removeEventListener('pointerup', onDragEnd);
-  activeCard.removeEventListener('pointercancel', onDragEnd);
-
-  // Check drop zone using distance
-  const zoneDislike = document.getElementById('zone-dislike');
-  const zoneLike = document.getElementById('zone-like');
-  const dzLeft = zoneDislike.getBoundingClientRect();
-  const dzRight = zoneLike.getBoundingClientRect();
-
-  const lcx = (dzLeft.left + dzLeft.right) / 2;
-  const lcy = (dzLeft.top + dzLeft.bottom) / 2;
-  const distLeft = Math.hypot(e.clientX - lcx, e.clientY - lcy);
-
-  const rcx = (dzRight.left + dzRight.right) / 2;
-  const rcy = (dzRight.top + dzRight.bottom) / 2;
-  const distRight = Math.hypot(e.clientX - rcx, e.clientY - rcy);
-
-  const ACTIVATE = 80;
-  const overLeft = distLeft < ACTIVATE;
-  const overRight = distRight < ACTIVATE;
-
-  // Reset zone states
-  zoneDislike.classList.remove('active');
-  zoneLike.classList.remove('active');
-  const lLabel = zoneDislike.querySelector('.zone-label');
-  const rLabel = zoneLike.querySelector('.zone-label');
-  if (lLabel) { lLabel.style.opacity = 0; lLabel.style.transform = 'scale(.5)'; }
-  if (rLabel) { rLabel.style.opacity = 0; rLabel.style.transform = 'scale(.5)'; }
-
-  if (overLeft) {
-    dropVote('dislike');
-  } else if (overRight) {
-    dropVote('accept');
-  } else {
-    // Snap back
-    activeCard.style.transform = '';
-    activeCard.classList.remove('dragging');
-    activeCard.classList.add('snap-back');
-    setTimeout(() => {
-      if (activeCard) {
-        activeCard.style.position = '';
-        activeCard.style.left = '';
-        activeCard.style.top = '';
-        activeCard.style.width = '';
-        activeCard.style.zIndex = '';
-        activeCard.classList.remove('snap-back');
-      }
-    }, 300);
+  // Deselect previous
+  if (selectedCard) {
+    selectedCard.classList.remove('selected');
   }
+  // Select card (shows overlay to pick/change vote)
+  card.classList.add('selected');
+  selectedCard = card;
 }
 
-function dropVote(voteType) {
-  const card = activeCard;
+function voteCard(card, voteType) {
   const dishId = parseInt(card.dataset.dishId);
 
-  // Fly off in the direction of the zone
-  const dir = voteType === 'accept' ? 1 : -1;
-  card.style.transform = `translate(${dir * 300}px, -150px) rotate(${dir * 20}deg)`;
-  card.style.opacity = '0';
-  card.style.transition = 'transform .35s ease, opacity .35s ease';
+  // Remove selection overlay
+  card.classList.remove('selected');
+  selectedCard = null;
 
+  // Remove previous vote state
+  card.classList.remove('voted-like', 'voted-dislike');
+
+  // Apply new state
+  if (voteType === 'accept') {
+    card.classList.add('voted-like');
+    card.dataset.vote = 'accept';
+  } else {
+    card.classList.add('voted-dislike');
+    card.dataset.vote = 'dislike';
+  }
+
+  // Send vote immediately
   submitVote(dishId, voteType);
 
-  setTimeout(() => {
-    card.remove();
-    remainingDishes = remainingDishes.filter(d => d.id !== dishId);
-    votedCount++;
-    updateProgress();
-    if (remainingDishes.length === 0) showResults();
-  }, 350);
+  // Update progress
+  updateVoteProgress();
+}
+
+function updateVoteProgress() {
+  const cards = document.querySelectorAll('#card-grid .card');
+  const votedCards = document.querySelectorAll('#card-grid .card.voted-like, #card-grid .card.voted-dislike');
+  votedCount = votedCards.length;
+  document.getElementById('progress-fill').style.width = (votedCount / totalDishes * 100) + '%';
+  document.getElementById('progress-text').textContent = votedCount + ' / ' + totalDishes;
 }
 
 // ── Submit All Votes ──
@@ -906,10 +757,15 @@ async function doFinalSubmit() {
   btn.textContent = '提交中...';
 
   try {
-    // All remaining (untouched) dishes count as neutral
-    const neutralPromises = remainingDishes.map(d =>
-      submitVote(d.id, 'neutral').catch(() => {})
-    );
+    // Collect unvoted cards and submit them as neutral
+    const cards = document.querySelectorAll('#card-grid .card');
+    const neutralPromises = [];
+    cards.forEach(card => {
+      if (!card.dataset.vote) {
+        const dishId = parseInt(card.dataset.dishId);
+        neutralPromises.push(submitVote(dishId, 'neutral').catch(() => {}));
+      }
+    });
 
     // Save tailor data alongside dietary preferences
     const tailorPromise = api('/api/preferences', {
@@ -918,10 +774,6 @@ async function doFinalSubmit() {
     });
 
     await Promise.all([...neutralPromises, tailorPromise]);
-
-    votedCount += remainingDishes.length;
-    remainingDishes = [];
-    updateProgress();
   } catch (e) {
     console.error('Submit failed:', e);
   }
