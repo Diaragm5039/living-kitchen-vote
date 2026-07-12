@@ -96,53 +96,65 @@ input{font:inherit;color:inherit}
 /* Progress */
 .progress-bar{
   height:4px;border-radius:2px;background:rgba(255,255,255,.08);
-  overflow:hidden;flex-shrink:0;margin:0 52px;
+  overflow:hidden;flex-shrink:0;margin:0 12px;
 }
 .progress-bar .fill{
   height:100%;border-radius:2px;
   background:linear-gradient(90deg,#8b5cf6,#38bdf8);
   transition:width .4s ease;
 }
-.progress-text{font-size:.75rem;color:#94a3b8;text-align:center;flex-shrink:0;padding:4px 52px}
+.progress-text{font-size:.75rem;color:#94a3b8;text-align:center;flex-shrink:0;padding:4px 12px}
 
 /* Side Drop Zones */
 .drop-zone{
   position:absolute;top:0;bottom:0;
-  width:52px;
+  width:38%;
   display:flex;align-items:center;justify-content:center;
-  writing-mode:vertical-rl;
-  font-size:.75rem;font-weight:700;letter-spacing:3px;
-  opacity:.3;transition:opacity .3s,background .3s,box-shadow .3s;
-  pointer-events:none;z-index:50;
+  z-index:50;pointer-events:none;
+  transition:background .25s;
+}
+.drop-zone .zone-label{
+  font-size:1.6rem;font-weight:800;letter-spacing:4px;
+  opacity:0;transform:scale(.6);
+  transition:opacity .25s,transform .25s;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
 }
 .drop-zone.dislike-zone{
-  left:0;border-radius:0 14px 14px 0;
-  background:rgba(239,68,68,.05);color:#ef4444;
-  border-right:2px solid rgba(239,68,68,.12);
+  left:0;
+  background:linear-gradient(90deg,rgba(239,68,68,.04),transparent);
+  border-right:2px solid rgba(239,68,68,.06);
 }
+.drop-zone.dislike-zone .zone-label{color:#ef4444}
 .drop-zone.like-zone{
-  right:0;border-radius:14px 0 0 14px;
-  background:rgba(34,197,94,.05);color:#22c55e;
-  border-left:2px solid rgba(34,197,94,.12);
+  right:0;
+  background:linear-gradient(-90deg,rgba(34,197,94,.04),transparent);
+  border-left:2px solid rgba(34,197,94,.06);
 }
-.drop-zone.active{opacity:1}
+.drop-zone.like-zone .zone-label{color:#22c55e}
+
+/* Active state — zone lights up with floating label */
+.drop-zone.active .zone-label{
+  opacity:1;transform:scale(1);
+}
 .drop-zone.dislike-zone.active{
-  background:rgba(239,68,68,.2);box-shadow:inset -4px 0 20px rgba(239,68,68,.15);
+  background:linear-gradient(90deg,rgba(239,68,68,.28) 0%,rgba(239,68,68,.06) 70%,transparent);
+  border-right-color:rgba(239,68,68,.3);
 }
 .drop-zone.like-zone.active{
-  background:rgba(34,197,94,.2);box-shadow:inset 4px 0 20px rgba(34,197,94,.15);
+  background:linear-gradient(-90deg,rgba(34,197,94,.28) 0%,rgba(34,197,94,.06) 70%,transparent);
+  border-left-color:rgba(34,197,94,.3);
 }
 
 /* Card Grid */
 .card-grid{
-  flex:1;overflow-y:auto;padding:8px 56px 12px;
+  flex:1;overflow-y:auto;padding:8px 16px 12px;
   display:grid;grid-template-columns:1fr 1fr;gap:10px;
   align-content:start;
 }
 
 /* Submit Button */
 .submit-bar{
-  flex-shrink:0;padding:8px 56px 16px;
+  flex-shrink:0;padding:8px 16px 16px;
 }
 .submit-btn{
   width:100%;padding:14px;border-radius:14px;
@@ -445,8 +457,12 @@ input{font:inherit;color:inherit}
   <div id="screen-vote" class="screen vote-screen">
     <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
     <div class="progress-text" id="progress-text">0 / 0</div>
-    <div class="drop-zone dislike-zone" id="zone-dislike">不喜欢 ✕</div>
-    <div class="drop-zone like-zone" id="zone-like">我喜欢 ♥</div>
+    <div class="drop-zone dislike-zone" id="zone-dislike">
+      <span class="zone-label">不喜欢</span>
+    </div>
+    <div class="drop-zone like-zone" id="zone-like">
+      <span class="zone-label">我喜欢</span>
+    </div>
     <div class="card-grid" id="card-grid"></div>
     <div class="submit-bar">
       <button class="submit-btn" id="btn-submit" onclick="submitAll()">提交</button>
