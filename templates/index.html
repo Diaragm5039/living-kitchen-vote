@@ -107,42 +107,52 @@ input{font:inherit;color:inherit}
 
 /* Side Drop Zones */
 .drop-zone{
-  position:absolute;top:0;bottom:0;
-  width:38%;
-  display:flex;align-items:center;justify-content:center;
-  z-index:50;pointer-events:none;
-  transition:background .25s;
+  position:absolute;top:60px;
+  width:72px;height:72px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border-radius:16px;
+  font-size:.7rem;font-weight:700;letter-spacing:1px;
+  opacity:.35;transition:all .3s ease;
+  pointer-events:none;z-index:50;
 }
 .drop-zone .zone-label{
-  font-size:1.6rem;font-weight:800;letter-spacing:4px;
-  opacity:0;transform:scale(.6);
-  transition:opacity .25s,transform .25s;
-  text-shadow:0 2px 12px rgba(0,0,0,.5);
+  font-size:1.4rem;font-weight:800;letter-spacing:2px;
+  opacity:0;transform:scale(.5);
+  transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);
+  text-shadow:0 2px 16px rgba(0,0,0,.6);
+  position:absolute;
+  white-space:nowrap;
 }
 .drop-zone.dislike-zone{
-  left:0;
-  background:linear-gradient(90deg,rgba(239,68,68,.04),transparent);
-  border-right:2px solid rgba(239,68,68,.06);
+  left:12px;
+  background:rgba(239,68,68,.08);color:#ef4444;
+  border:2px solid rgba(239,68,68,.15);
 }
 .drop-zone.dislike-zone .zone-label{color:#ef4444}
 .drop-zone.like-zone{
-  right:0;
-  background:linear-gradient(-90deg,rgba(34,197,94,.04),transparent);
-  border-left:2px solid rgba(34,197,94,.06);
+  right:12px;
+  background:rgba(34,197,94,.08);color:#22c55e;
+  border:2px solid rgba(34,197,94,.15);
 }
 .drop-zone.like-zone .zone-label{color:#22c55e}
 
-/* Active state — zone lights up with floating label */
-.drop-zone.active .zone-label{
-  opacity:1;transform:scale(1);
+/* Active state — zone grows and label floats up */
+.drop-zone.active{
+  opacity:1;
+  width:90px;height:90px;
 }
 .drop-zone.dislike-zone.active{
-  background:linear-gradient(90deg,rgba(239,68,68,.28) 0%,rgba(239,68,68,.06) 70%,transparent);
-  border-right-color:rgba(239,68,68,.3);
+  background:rgba(239,68,68,.2);
+  border-color:rgba(239,68,68,.4);
+  box-shadow:0 0 30px rgba(239,68,68,.25);
 }
 .drop-zone.like-zone.active{
-  background:linear-gradient(-90deg,rgba(34,197,94,.28) 0%,rgba(34,197,94,.06) 70%,transparent);
-  border-left-color:rgba(34,197,94,.3);
+  background:rgba(34,197,94,.2);
+  border-color:rgba(34,197,94,.4);
+  box-shadow:0 0 30px rgba(34,197,94,.25);
+}
+.drop-zone.active .zone-label{
+  opacity:1;transform:scale(1);
 }
 
 /* Card Grid */
@@ -170,7 +180,7 @@ input{font:inherit;color:inherit}
   background:#1e1b2e;border-radius:14px;
   border:1px solid rgba(255,255,255,.08);
   overflow:hidden;user-select:none;
-  touch-action:none;cursor:grab;
+  touch-action:pan-y;cursor:grab;
   transition:transform .2s,box-shadow .2s,opacity .2s;
 }
 .card:active{cursor:grabbing}
@@ -676,22 +686,15 @@ function createCard(dish) {
 }
 
 // ── Drag to Zone ──
+let dragThresholdMet = false;
+
 function onDragStart(e) {
   const card = e.currentTarget;
-  const rect = card.getBoundingClientRect();
-
   activeCard = card;
-  isDragging = true;
+  isDragging = false;
+  dragThresholdMet = false;
   startX = e.clientX;
   startY = e.clientY;
-
-  // Fix card at its current screen position
-  card.style.position = 'fixed';
-  card.style.left = rect.left + 'px';
-  card.style.top = rect.top + 'px';
-  card.style.width = rect.width + 'px';
-  card.style.zIndex = '200';
-  card.classList.add('dragging');
 
   card.setPointerCapture(e.pointerId);
   card.addEventListener('pointermove', onDragMove);
@@ -700,40 +703,133 @@ function onDragStart(e) {
 }
 
 function onDragMove(e) {
-  if (!isDragging || !activeCard) return;
+  if (!activeCard) return;
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
+
+  // Threshold: only engage drag if horizontal movement > 12px
+  if (!dragThresholdMet) {
+    if (Math.abs(dx) < 12) return;
+    // If vertical movement dominates, cancel (user is scrolling)
+    if (Math.abs(dy) > Math.abs(dx) * 1.2) {
+      cancelDrag();
+      return;
+    }
+    dragThresholdMet = true;
+    isDragging = true;
+
+    // Now fix card position for dragging
+    const rect = activeCard.getBoundingClientRect();
+    activeCard.style.position = 'fixed';
+    activeCard.style.left = rect.left + 'px';
+    activeCard.style.top = rect.top + 'px';
+    activeCard.style.width = rect.width + 'px';
+    activeCard.style.zIndex = '200';
+    activeCard.classList.add('dragging');
+  }
+
   activeCard.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`;
 
-  // Check which drop zone the pointer is over
-  const dzLeft = document.getElementById('zone-dislike').getBoundingClientRect();
-  const dzRight = document.getElementById('zone-like').getBoundingClientRect();
-  const overLeft = e.clientX >= dzLeft.left && e.clientX <= dzLeft.right
-    && e.clientY >= dzLeft.top && e.clientY <= dzLeft.bottom;
-  const overRight = e.clientX >= dzRight.left && e.clientX <= dzRight.right
-    && e.clientY >= dzRight.top && e.clientY <= dzRight.bottom;
+  // Proximity-based zone activation with distance-based label reveal
+  const zoneDislike = document.getElementById('zone-dislike');
+  const zoneLike = document.getElementById('zone-like');
+  const dzLeft = zoneDislike.getBoundingClientRect();
+  const dzRight = zoneLike.getBoundingClientRect();
 
-  document.getElementById('zone-dislike').classList.toggle('active', overLeft);
-  document.getElementById('zone-like').classList.toggle('active', overRight);
+  // Calculate distance from pointer to zone center
+  const lcx = (dzLeft.left + dzLeft.right) / 2;
+  const lcy = (dzLeft.top + dzLeft.bottom) / 2;
+  const distLeft = Math.hypot(e.clientX - lcx, e.clientY - lcy);
+
+  const rcx = (dzRight.left + dzRight.right) / 2;
+  const rcy = (dzRight.top + dzRight.bottom) / 2;
+  const distRight = Math.hypot(e.clientX - rcx, e.clientY - rcy);
+
+  const PROXIMITY = 200; // px range where label starts appearing
+  const ACTIVATE = 80;   // px range where zone is "active" (accepts drop)
+
+  // Left zone
+  if (distLeft < ACTIVATE) {
+    zoneDislike.classList.add('active');
+  } else {
+    zoneDislike.classList.remove('active');
+  }
+  // Proximity label reveal (fade in as card approaches)
+  const lLabel = zoneDislike.querySelector('.zone-label');
+  if (distLeft < PROXIMITY) {
+    const t = 1 - (distLeft - ACTIVATE) / (PROXIMITY - ACTIVATE);
+    const scale = 0.5 + 0.5 * Math.max(0, t);
+    lLabel.style.opacity = Math.max(0, t);
+    lLabel.style.transform = `scale(${scale})`;
+  } else {
+    lLabel.style.opacity = 0;
+    lLabel.style.transform = 'scale(.5)';
+  }
+
+  // Right zone
+  if (distRight < ACTIVATE) {
+    zoneLike.classList.add('active');
+  } else {
+    zoneLike.classList.remove('active');
+  }
+  const rLabel = zoneLike.querySelector('.zone-label');
+  if (distRight < PROXIMITY) {
+    const t = 1 - (distRight - ACTIVATE) / (PROXIMITY - ACTIVATE);
+    const scale = 0.5 + 0.5 * Math.max(0, t);
+    rLabel.style.opacity = Math.max(0, t);
+    rLabel.style.transform = `scale(${scale})`;
+  } else {
+    rLabel.style.opacity = 0;
+    rLabel.style.transform = 'scale(.5)';
+  }
+}
+
+function cancelDrag() {
+  if (!activeCard) return;
+  activeCard.removeEventListener('pointermove', onDragMove);
+  activeCard.removeEventListener('pointerup', onDragEnd);
+  activeCard.removeEventListener('pointercancel', onDragEnd);
+  activeCard = null;
+  isDragging = false;
+  dragThresholdMet = false;
 }
 
 function onDragEnd(e) {
-  if (!isDragging || !activeCard) return;
+  if (!isDragging || !activeCard) {
+    // Threshold not met — just clean up listeners
+    if (activeCard) cancelDrag();
+    return;
+  }
   isDragging = false;
   activeCard.removeEventListener('pointermove', onDragMove);
   activeCard.removeEventListener('pointerup', onDragEnd);
   activeCard.removeEventListener('pointercancel', onDragEnd);
 
-  // Check drop zone
-  const dzLeft = document.getElementById('zone-dislike').getBoundingClientRect();
-  const dzRight = document.getElementById('zone-like').getBoundingClientRect();
-  const overLeft = e.clientX >= dzLeft.left && e.clientX <= dzLeft.right
-    && e.clientY >= dzLeft.top && e.clientY <= dzLeft.bottom;
-  const overRight = e.clientX >= dzRight.left && e.clientX <= dzRight.right
-    && e.clientY >= dzRight.top && e.clientY <= dzRight.bottom;
+  // Check drop zone using distance
+  const zoneDislike = document.getElementById('zone-dislike');
+  const zoneLike = document.getElementById('zone-like');
+  const dzLeft = zoneDislike.getBoundingClientRect();
+  const dzRight = zoneLike.getBoundingClientRect();
 
-  document.getElementById('zone-dislike').classList.remove('active');
-  document.getElementById('zone-like').classList.remove('active');
+  const lcx = (dzLeft.left + dzLeft.right) / 2;
+  const lcy = (dzLeft.top + dzLeft.bottom) / 2;
+  const distLeft = Math.hypot(e.clientX - lcx, e.clientY - lcy);
+
+  const rcx = (dzRight.left + dzRight.right) / 2;
+  const rcy = (dzRight.top + dzRight.bottom) / 2;
+  const distRight = Math.hypot(e.clientX - rcx, e.clientY - rcy);
+
+  const ACTIVATE = 80;
+  const overLeft = distLeft < ACTIVATE;
+  const overRight = distRight < ACTIVATE;
+
+  // Reset zone states
+  zoneDislike.classList.remove('active');
+  zoneLike.classList.remove('active');
+  const lLabel = zoneDislike.querySelector('.zone-label');
+  const rLabel = zoneLike.querySelector('.zone-label');
+  if (lLabel) { lLabel.style.opacity = 0; lLabel.style.transform = 'scale(.5)'; }
+  if (rLabel) { rLabel.style.opacity = 0; rLabel.style.transform = 'scale(.5)'; }
 
   if (overLeft) {
     dropVote('dislike');
