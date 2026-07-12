@@ -21,5 +21,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_user_dish ON votes(user_name, dish_id);
 CREATE TABLE IF NOT EXISTS user_dietary (
     user_name TEXT PRIMARY KEY,
     disliked_ingredients TEXT NOT NULL,
+    tailor TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

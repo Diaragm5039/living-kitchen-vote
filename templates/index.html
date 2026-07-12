@@ -276,6 +276,43 @@ input{font:inherit;color:inherit}
 }
 .btn-confirm-ok:active{transform:scale(.97)}
 
+/* ═══ Tailor Dialog ═══ */
+.tailor-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;
+  z-index:500;backdrop-filter:blur(6px);
+  animation:fadeIn .2s ease;
+}
+.tailor-box{
+  background:#1e1b2e;border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:28px 24px;
+  width:88%;max-width:360px;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:scaleIn .25s ease;
+}
+.tailor-box .tailor-icon{font-size:2.5rem;margin-bottom:12px}
+.tailor-box h3{font-size:1.05rem;font-weight:700;margin-bottom:8px;line-height:1.5}
+.tailor-box .tailor-hint{font-size:.78rem;color:#94a3b8;line-height:1.5;margin-bottom:16px}
+.tailor-box textarea{
+  width:100%;padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#e2e8f0;font-size:.9rem;outline:none;resize:vertical;
+  min-height:60px;margin-bottom:16px;
+  font-family:inherit;
+}
+.tailor-box textarea:focus{border-color:#818cf8}
+.tailor-box textarea::placeholder{color:#64748b}
+.tailor-actions{display:flex;gap:10px}
+.tailor-actions button{
+  flex:1;padding:13px;border-radius:12px;
+  font-size:.9rem;font-weight:600;transition:all .2s;
+}
+.btn-tailor-submit{
+  background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;
+  box-shadow:0 4px 16px rgba(99,102,241,.3);
+}
+.btn-tailor-submit:active{transform:scale(.97)}
+
 /* ═══ Animations ═══ */
 @keyframes fadeInUp{
   from{opacity:0;transform:translateY(20px)}
@@ -379,13 +416,14 @@ input{font:inherit;color:inherit}
   <div id="screen-ingredients" class="screen ingredient-picker">
     <h2>🚫 有没有不吃的食材？</h2>
     <p class="picker-sub">选好后，含这些食材的菜品会为你标注提醒，偏好也会被记录</p>
+    <p class="picker-sub">菇 葱 椒 为大类，无法满足需求请在其他内添加</p>
     <div class="ingredient-chips" id="ingredient-chips"></div>
     <div class="custom-ingredient-wrap">
       <input id="custom-ingredient" type="text" placeholder="其他食材..." maxlength="20">
       <button class="custom-add-btn" onclick="addCustomIngredient()">添加</button>
     </div>
-    <p class="picker-hint" style="margin-top:-10px">多项用顿号隔开，如：花椒、八角</p>
-    <p class="picker-hint">可跳过，直接开始投票</p>
+    <p class="picker-hint" style="margin-top:-10px">多项可用顿号隔开，如：花椒、八角</p>
+    <p class="picker-sub">可跳过，直接开始投票</p>
     <button class="btn-primary" onclick="confirmIngredients()">开始投票</button>
   </div>
 
@@ -711,19 +749,55 @@ function dropVote(voteType) {
 }
 
 // ── Submit All Votes ──
-async function submitAll() {
+function submitAll() {
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tailor-overlay';
+  overlay.innerHTML = `
+    <div class="tailor-box">
+      <div class="tailor-icon">🍳</div>
+      <h3>有没有你最喜欢 / 最拿手的菜品<br>但是表单里没有？</h3>
+      <p class="tailor-hint">写下来，下次也许就能加入菜单！<br>没有的话直接点提交即可</p>
+      <textarea id="tailor-input" placeholder="例如：红烧肉、糖醋排骨..." rows="3"></textarea>
+      <div class="tailor-actions">
+        <button class="btn-tailor-submit" onclick="doFinalSubmit()">提交</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Focus the textarea
+  setTimeout(() => document.getElementById('tailor-input')?.focus(), 100);
+}
+
+async function doFinalSubmit() {
+  const tailorText = (document.getElementById('tailor-input')?.value || '').trim();
+  document.querySelector('.tailor-overlay')?.remove();
+
+  const btn = document.getElementById('btn-submit');
   btn.textContent = '提交中...';
 
-  // All remaining (untouched) dishes count as neutral
-  if (remainingDishes.length > 0) {
-    await Promise.all(remainingDishes.map(d =>
+  try {
+    // All remaining (untouched) dishes count as neutral
+    const neutralPromises = remainingDishes.map(d =>
       submitVote(d.id, 'neutral').catch(() => {})
-    ));
+    );
+
+    // Save tailor data alongside dietary preferences
+    const tailorPromise = api('/api/preferences', {
+      method: 'POST',
+      body: JSON.stringify({ user: userName, disliked_ingredients: dislikedIngredients.join('、'), tailor: tailorText })
+    });
+
+    await Promise.all([...neutralPromises, tailorPromise]);
+
     votedCount += remainingDishes.length;
     remainingDishes = [];
     updateProgress();
+  } catch (e) {
+    console.error('Submit failed:', e);
   }
 
   showResults();
@@ -795,7 +869,7 @@ async function showResults() {
 
     html += `
       <div class="btn-row fade-in">
-        <button class="btn-secondary" onclick="confirmReset()">重新投票</button>
+        <button class="btn-secondary" onclick="confirmReset()">重新投票/再玩一次</button>
       </div>
     `;
 

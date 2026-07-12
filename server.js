@@ -389,16 +389,17 @@ app.post('/api/reset-my-votes', async (req, res) => {
 
 app.post('/api/preferences', async (req, res) => {
   try {
-    const { user, disliked_ingredients } = req.body;
+    const { user, disliked_ingredients, tailor } = req.body;
     const userName = (user || '').trim();
     if (!userName) return res.status(400).json({ error: '缺少用户名' });
     const ingredients = (disliked_ingredients || '').trim();
+    const tailorText = (tailor || '').trim();
 
     await pool.query(
-      `INSERT INTO user_dietary (user_name, disliked_ingredients)
-       VALUES ($1, $2)
-       ON CONFLICT (user_name) DO UPDATE SET disliked_ingredients = $2`,
-      [userName, ingredients]
+      `INSERT INTO user_dietary (user_name, disliked_ingredients, tailor)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_name) DO UPDATE SET disliked_ingredients = $2, tailor = $3`,
+      [userName, ingredients, tailorText]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -409,7 +410,7 @@ app.post('/api/preferences', async (req, res) => {
 app.get('/api/admin/dietary', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT user_name, disliked_ingredients, created_at FROM user_dietary ORDER BY created_at DESC'
+      'SELECT user_name, disliked_ingredients, tailor, created_at FROM user_dietary ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (e) {
@@ -462,6 +463,9 @@ async function main() {
     // Auto-update votes CHECK constraint to include 'neutral'
     await pool.query(`ALTER TABLE votes DROP CONSTRAINT IF EXISTS votes_vote_type_check`);
     await pool.query(`ALTER TABLE votes ADD CONSTRAINT votes_vote_type_check CHECK (vote_type IN ('accept', 'dislike', 'neutral'))`);
+
+    // Auto-add tailor column to user_dietary if missing
+    await pool.query(`ALTER TABLE user_dietary ADD COLUMN IF NOT EXISTS tailor TEXT DEFAULT ''`);
 
     console.log('  Tables ready');
   } catch (e) {

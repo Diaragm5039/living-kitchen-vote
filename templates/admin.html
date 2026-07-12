@@ -410,12 +410,16 @@ function renderDietary() {
     return;
   }
   let html = `<table class="dietary-table">
-    <thead><tr><th>用户</th><th>忌口食材</th><th>操作</th></tr></thead><tbody>`;
+    <thead><tr><th>用户</th><th>忌口食材</th><th>推荐菜品</th><th>操作</th></tr></thead><tbody>`;
   for (const d of dietaryData) {
-    const tags = d.disliked_ingredients.split('、').map(i => `<span>${i}</span>`).join('');
+    const tags = d.disliked_ingredients
+      ? d.disliked_ingredients.split('、').filter(Boolean).map(i => `<span>${i}</span>`).join('')
+      : '<span style="opacity:.4">无</span>';
+    const tailor = d.tailor ? d.tailor.replace(/[，,、\n]/g, '、') : '<span style="opacity:.4">—</span>';
     html += `<tr>
       <td style="font-weight:500">${d.user_name}</td>
       <td class="dietary-tags">${tags}</td>
+      <td style="color:#818cf8;font-size:.82rem">${tailor}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteDietary('${d.user_name}')">删除</button></td>
     </tr>`;
   }
