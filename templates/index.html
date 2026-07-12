@@ -26,8 +26,8 @@ input{font:inherit;color:inherit}
 
 /* ── Layout ── */
 #app{
-  width:100%;max-width:430px;min-height:100dvh;position:relative;
-  display:flex;flex-direction:column;padding:0 16px;
+  width:100%;max-width:430px;height:100dvh;position:relative;
+  display:flex;flex-direction:column;padding:0 16px;overflow:hidden;
 }
 
 /* ── Header ── */
@@ -44,7 +44,7 @@ input{font:inherit;color:inherit}
 
 /* ── Screens ── */
 .screen{display:none;flex:1;flex-direction:column}
-.screen.active{display:flex}
+.screen.active{display:flex;min-height:0}
 
 /* ═══ Welcome Screen ═══ */
 .welcome{justify-content:center;align-items:center;gap:32px;padding:40px 0}
@@ -256,7 +256,7 @@ input{font:inherit;color:inherit}
 
 /* ═══ Ingredient Picker Screen ═══ */
 .ingredient-picker{
-  justify-content:center;align-items:center;gap:20px;padding:20px 0;
+  justify-content:center;align-items:center;gap:20px;padding:20px 0;overflow-y:auto;
 }
 .ingredient-picker h2{
   font-size:1.3rem;font-weight:700;text-align:center;
