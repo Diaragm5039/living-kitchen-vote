@@ -18,7 +18,7 @@ body{
 }
 
 /* ── Layout ── */
-.container{max-width:900px;margin:0 auto;padding:20px 16px}
+.container{max-width:1100px;margin:0 auto;padding:20px 16px}
 .header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--glass-border);margin-bottom:24px}
 .header h1{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .header-actions{display:flex;gap:8px}
@@ -76,17 +76,24 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
 .toolbar input{flex:1;min-width:160px}
 
 /* ── Table ── */
-.dish-table{width:100%;border-collapse:collapse}
+.dish-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .dish-table th{
   text-align:left;font-size:.75rem;color:#94a3b8;font-weight:600;
   padding:8px 12px;border-bottom:1px solid var(--glass-border);
-  text-transform:uppercase;letter-spacing:.5px;
+  text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;
 }
 .dish-table td{
   padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);
-  font-size:.85rem;vertical-align:middle;
+  font-size:.85rem;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dish-table td.ingredients-col{
+  white-space:normal;word-break:break-all;max-width:0;
 }
 .dish-table tr:hover td{background:rgba(255,255,255,.02)}
+.dish-table th:nth-child(1){width:140px}
+.dish-table th:nth-child(2){width:60px}
+.dish-table th:nth-child(4){width:120px}
+.dish-table th:nth-child(5){width:110px}
 .cat-badge{
   display:inline-block;padding:3px 10px;border-radius:20px;
   font-size:.7rem;font-weight:600;
@@ -177,7 +184,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab-btn active" id="tab-dishes" onclick="switchView('dishes')">🍽 菜品</button>
-    <button class="tab-btn" id="tab-dietary" onclick="switchView('dietary')">🚫 忌口</button>
+    <button class="tab-btn" id="tab-dietary" onclick="switchView('dietary')">🚫 定制</button>
   </div>
 
   <!-- Dishes View -->
