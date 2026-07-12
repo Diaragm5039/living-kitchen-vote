@@ -242,6 +242,40 @@ input{font:inherit;color:inherit}
 .empty-state .icon{font-size:3rem;opacity:.5}
 .empty-state p{color:#64748b;text-align:center}
 
+/* ═══ Confirm Dialog ═══ */
+.confirm-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;
+  z-index:500;backdrop-filter:blur(6px);
+  animation:fadeIn .2s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.confirm-box{
+  background:#1e1b2e;border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:28px 24px;
+  width:85%;max-width:320px;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:scaleIn .25s ease;
+}
+@keyframes scaleIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.confirm-box .confirm-icon{font-size:2.5rem;margin-bottom:12px}
+.confirm-box h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.confirm-box p{font-size:.82rem;color:#94a3b8;line-height:1.5;margin-bottom:20px}
+.confirm-actions{display:flex;gap:10px}
+.confirm-actions button{
+  flex:1;padding:12px;border-radius:12px;
+  font-size:.9rem;font-weight:600;transition:all .2s;
+}
+.btn-confirm-cancel{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94a3b8;
+}
+.btn-confirm-cancel:active{background:rgba(255,255,255,.1)}
+.btn-confirm-ok{
+  background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;
+  box-shadow:0 4px 16px rgba(239,68,68,.3);
+}
+.btn-confirm-ok:active{transform:scale(.97)}
+
 /* ═══ Animations ═══ */
 @keyframes fadeInUp{
   from{opacity:0;transform:translateY(20px)}
@@ -761,7 +795,7 @@ async function showResults() {
 
     html += `
       <div class="btn-row fade-in">
-        <button class="btn-secondary" onclick="location.reload()">重新投票</button>
+        <button class="btn-secondary" onclick="confirmReset()">重新投票</button>
       </div>
     `;
 
@@ -769,6 +803,59 @@ async function showResults() {
   } catch (e) {
     container.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><p>加载失败，请刷新重试</p></div>';
   }
+}
+
+// ── Confirm Reset ──
+function confirmReset() {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-icon">🔄</div>
+      <h3>确认重新投票？</h3>
+      <p>将清除「${userName}」的所有投票和忌口记录，之后以相同身份重新开始投票。</p>
+      <div class="confirm-actions">
+        <button class="btn-confirm-cancel" onclick="this.closest('.confirm-overlay').remove()">取消</button>
+        <button class="btn-confirm-ok" onclick="doReset()">确认</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+async function doReset() {
+  document.querySelector('.confirm-overlay')?.remove();
+  try {
+    await api('/api/reset-my-votes', {
+      method: 'POST',
+      body: JSON.stringify({ user: userName })
+    });
+  } catch (e) {
+    console.error('Reset failed:', e);
+  }
+  // Reset local state and re-enter voting with same username
+  dislikedIngredients = [];
+  votedCount = 0;
+  remainingDishes = [];
+
+  const btn = document.getElementById('btn-start');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+  try {
+    allDishes = await api('/api/dishes');
+    remainingDishes = await api('/api/dishes/remaining?user=' + encodeURIComponent(userName));
+    totalDishes = allDishes.length;
+    votedCount = 0;
+    showScreen('ingredients');
+    renderIngredientChips();
+  } catch (e) {
+    alert('加载失败，请刷新重试');
+  }
+  btn.disabled = false;
+  btn.textContent = '开始投票';
 }
 
 // ── Enter to Start ──

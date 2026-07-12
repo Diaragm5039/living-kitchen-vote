@@ -370,6 +370,19 @@ app.post('/api/admin/reset-votes', requireAdmin, async (req, res) => {
   }
 });
 
+// Reset a single user's votes and dietary preferences (for re-voting)
+app.post('/api/reset-my-votes', async (req, res) => {
+  try {
+    const userName = (req.body.user || '').trim();
+    if (!userName) return res.status(400).json({ error: '缺少用户名' });
+    await pool.query('DELETE FROM votes WHERE user_name = $1', [userName]);
+    await pool.query('DELETE FROM user_dietary WHERE user_name = $1', [userName]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ════════════════════════════════════════════
 //  API: Dietary Preferences
 // ════════════════════════════════════════════
