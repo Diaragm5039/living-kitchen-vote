@@ -91,85 +91,87 @@ input{font:inherit;color:inherit}
 }
 .progress-text{font-size:.75rem;color:#94a3b8;text-align:center;flex-shrink:0}
 
-/* Card Stack */
-.card-stack{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  position:relative;min-height:340px;
-  touch-action:none;
+/* Drop Zones */
+.vote-screen{position:relative}
+.drop-zone{
+  position:absolute;top:0;
+  width:50%;height:68px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:0 0 16px 16px;
+  font-size:.8rem;font-weight:700;letter-spacing:1px;
+  opacity:.25;transition:opacity .3s,background .3s,box-shadow .3s;
+  pointer-events:none;z-index:50;
 }
+.drop-zone.dislike-zone{
+  left:0;
+  background:rgba(239,68,68,.06);
+  border:2px dashed rgba(239,68,68,.2);border-top:none;
+  color:#ef4444;
+}
+.drop-zone.accept-zone{
+  right:0;
+  background:rgba(34,197,94,.06);
+  border:2px dashed rgba(34,197,94,.2);border-top:none;
+  color:#22c55e;
+}
+.drop-zone.active{opacity:1}
+.drop-zone.dislike-zone.active{
+  background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5);
+  box-shadow:0 4px 20px rgba(239,68,68,.2);
+}
+.drop-zone.accept-zone.active{
+  background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.5);
+  box-shadow:0 4px 20px rgba(34,197,94,.2);
+}
+
+/* Card Grid */
+.card-grid{
+  flex:1;overflow-y:auto;padding:76px 0 20px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  align-content:start;
+}
+
+/* Compact Card */
 .card{
-  position:absolute;width:100%;max-width:360px;
-  background:#1e1b2e;border-radius:24px;
+  background:#1e1b2e;border-radius:14px;
   border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 8px 40px rgba(0,0,0,.4);
   overflow:hidden;user-select:none;
-  will-change:transform;
-  transition:box-shadow .3s;
+  touch-action:none;cursor:grab;
+  transition:transform .2s,box-shadow .2s,opacity .2s;
 }
-.card.dragging{transition:none;box-shadow:0 16px 60px rgba(0,0,0,.5)}
-.card.fly-left{animation:flyLeft .4s ease-in forwards}
-.card.fly-right{animation:flyRight .4s ease-in forwards}
-
-@keyframes flyLeft{to{transform:translateX(-150%) rotate(-30deg);opacity:0}}
-@keyframes flyRight{to{transform:translateX(150%) rotate(30deg);opacity:0}}
-
-/* Card Content */
-.card-emoji{
-  font-size:3.5rem;text-align:center;padding:28px 0 8px;
-  filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));
+.card:active{cursor:grabbing}
+.card.dragging{
+  position:fixed;z-index:200;
+  box-shadow:0 16px 48px rgba(0,0,0,.6);
+  opacity:.92;cursor:grabbing;
+  transition:none;
 }
+.card.snap-back{
+  transition:transform .3s ease,box-shadow .3s ease;
+}
+
+/* Compact Card Content */
+.card-emoji{font-size:1.6rem;text-align:center;padding:10px 0 2px}
 .card-name{
-  font-size:1.5rem;font-weight:700;text-align:center;
-  padding:0 24px;color:#fff;
+  font-size:.8rem;font-weight:600;text-align:center;
+  padding:0 6px;color:#fff;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
 .card-ingredients{
-  display:flex;flex-wrap:wrap;gap:6px;padding:16px 20px 8px;
+  display:flex;flex-wrap:wrap;gap:3px;padding:6px 6px 4px;
   justify-content:center;
 }
 .card-ingredients span{
-  padding:4px 10px;border-radius:20px;font-size:.7rem;
+  padding:1px 5px;border-radius:8px;font-size:.55rem;
   background:rgba(255,255,255,.06);color:#cbd5e1;
   border:1px solid rgba(255,255,255,.05);
+  max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.card-category{
-  text-align:center;padding:12px 0 24px;
-}
+.card-category{text-align:center;padding:4px 0 8px}
 .card-category span{
-  display:inline-block;padding:5px 16px;border-radius:20px;
-  font-size:.75rem;font-weight:600;letter-spacing:.5px;
-}
-
-/* Swipe Overlay */
-.card-overlay{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  border-radius:24px;opacity:0;pointer-events:none;
-  font-size:2rem;font-weight:800;letter-spacing:2px;
-  transition:opacity .1s;
-}
-.card-overlay.accept{background:rgba(34,197,94,.25);color:#22c55e;border:3px solid rgba(34,197,94,.5)}
-.card-overlay.dislike{background:rgba(239,68,68,.25);color:#ef4444;border:3px solid rgba(239,68,68,.5)}
-
-/* Action Buttons */
-.action-buttons{
-  display:flex;justify-content:center;gap:20px;padding:12px 0 8px;flex-shrink:0;
-}
-.action-btn{
-  width:64px;height:64px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.5rem;border:2px solid rgba(255,255,255,.1);
-  background:var(--glass);backdrop-filter:blur(10px);
-  transition:transform .2s,border-color .2s,background .2s;
-}
-.action-btn:active{transform:scale(.9)}
-.action-btn.dislike-btn:hover,.action-btn.dislike-btn:active{
-  border-color:var(--dislike);background:rgba(239,68,68,.15);
-}
-.action-btn.accept-btn:hover,.action-btn.accept-btn:active{
-  border-color:var(--accept);background:rgba(34,197,94,.15);
-}
-.swipe-hints{
-  display:flex;justify-content:space-between;padding:0 20px 20px;
-  font-size:.7rem;color:#475569;flex-shrink:0;
+  display:inline-block;padding:2px 8px;border-radius:10px;
+  font-size:.6rem;font-weight:600;
 }
 
 /* ═══ Results Screen ═══ */
@@ -288,14 +290,13 @@ input{font:inherit;color:inherit}
 /* ═══ Card Warning (disliked ingredients) ═══ */
 .card.has-disliked{
   border-color:rgba(239,68,68,.35);
-  box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 0 1px rgba(239,68,68,.15);
+  box-shadow:0 0 0 1px rgba(239,68,68,.15);
 }
 .card-warning{
-  position:absolute;top:0;left:0;right:0;
-  padding:6px 12px;font-size:.7rem;font-weight:600;
+  text-align:center;padding:3px 4px;font-size:.55rem;font-weight:600;
   color:#ef4444;background:rgba(239,68,68,.08);
   border-bottom:1px solid rgba(239,68,68,.12);
-  z-index:5;letter-spacing:.3px;
+  letter-spacing:.3px;
 }
 .card-ingredients .disliked-tag{
   background:rgba(239,68,68,.2) !important;
@@ -306,9 +307,13 @@ input{font:inherit;color:inherit}
 
 /* ═══ Responsive ═══ */
 @media(max-height:700px){
-  .card-emoji{padding-top:16px;font-size:2.8rem}
-  .card-name{font-size:1.3rem}
-  .action-btn{width:56px;height:56px;font-size:1.3rem}
+  .card-emoji{font-size:1.3rem;padding-top:6px}
+  .card-name{font-size:.75rem}
+  .drop-zone{height:56px}
+  .card-grid{padding-top:64px}
+}
+@media(min-width:500px){
+  .card-grid{grid-template-columns:1fr 1fr 1fr}
 }
 </style>
 </head>
@@ -325,7 +330,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>左滑不喜欢 · 右滑我接受<br>快来为你心仪的菜品投票吧！</p>
+      <p>拖拽菜品到左上角不喜欢 · 右上角我接受<br>快来为你心仪的菜品投票吧！</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -351,15 +356,9 @@ input{font:inherit;color:inherit}
   <div id="screen-vote" class="screen vote-screen">
     <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
     <div class="progress-text" id="progress-text">0 / 0</div>
-    <div class="card-stack" id="card-stack"></div>
-    <div class="action-buttons">
-      <button class="action-btn dislike-btn" onclick="voteAction('dislike')" title="不喜欢">✕</button>
-      <button class="action-btn accept-btn" onclick="voteAction('accept')" title="我接受">✓</button>
-    </div>
-    <div class="swipe-hints">
-      <span>← 不喜欢</span>
-      <span>我接受 →</span>
-    </div>
+    <div class="drop-zone dislike-zone" id="zone-dislike">✕ 不喜欢</div>
+    <div class="drop-zone accept-zone" id="zone-accept">✓ 我接受</div>
+    <div class="card-grid" id="card-grid"></div>
   </div>
 
   <!-- Results Screen -->
@@ -374,7 +373,7 @@ let remainingDishes = [];
 let votedCount = 0;
 let totalDishes = 0;
 let isDragging = false;
-let startX = 0, startY = 0, currentX = 0, currentY = 0;
+let startX = 0, startY = 0;
 let activeCard = null;
 let dislikedIngredients = [];
 
@@ -480,7 +479,7 @@ async function confirmIngredients() {
     }
   }
   showScreen('vote');
-  renderCardStack();
+  renderCardGrid();
   updateProgress();
 }
 
@@ -505,36 +504,25 @@ function updateProgress() {
   document.getElementById('progress-text').textContent = `${done} / ${total}`;
 }
 
-// ── Card Stack ──
-function renderCardStack() {
-  const stack = document.getElementById('card-stack');
-  stack.innerHTML = '';
-  const show = remainingDishes.slice(0, 3);
-  if (show.length === 0) {
+// ── Card Grid ──
+function renderCardGrid() {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+  if (remainingDishes.length === 0) {
     showResults();
     return;
   }
-  // Render in reverse so top card is last (highest z-index)
-  for (let i = show.length - 1; i >= 0; i--) {
-    const dish = show[i];
-    const card = createCard(dish, i);
-    stack.appendChild(card);
+  for (const dish of remainingDishes) {
+    grid.appendChild(createCard(dish));
   }
-  // Attach drag events to top card
-  const topCard = stack.lastElementChild;
-  if (topCard) attachDrag(topCard);
 }
 
-function createCard(dish, depth) {
+function createCard(dish) {
   const catColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--cat-' + dish.category) || '#818cf8';
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.dishId = dish.id;
-  const scale = 1 - depth * 0.04;
-  const ty = depth * 8;
-  el.style.transform = `translateY(${ty}px) scale(${scale})`;
-  el.style.zIndex = 10 - depth;
 
   // Build ingredient tags with disliked ingredient highlighting
   const allIngredients = dish.ingredients.split('、').map(s => s.trim()).filter(Boolean);
@@ -546,12 +534,12 @@ function createCard(dish, depth) {
       }
     }
   }
-  // Disliked ingredients first
+  // Disliked ingredients first, max 5 tags for compact card
   const sorted = [
     ...allIngredients.filter(i => dislikedSet.has(i)),
     ...allIngredients.filter(i => !dislikedSet.has(i))
-  ].slice(0, 8);
-  const moreCount = allIngredients.length - 8;
+  ].slice(0, 5);
+  const moreCount = allIngredients.length - 5;
   const moreTag = moreCount > 0 ? `<span>+${moreCount}</span>` : '';
 
   const tagHtml = sorted.map(t => {
@@ -563,101 +551,123 @@ function createCard(dish, depth) {
   if (hasDisliked) el.classList.add('has-disliked');
 
   el.innerHTML = `
-    <div class="card-overlay accept">我接受 ✓</div>
-    <div class="card-overlay dislike">不喜欢 ✕</div>
-    ${hasDisliked ? '<div class="card-warning">⚠ 含有你不喜欢的食材</div>' : ''}
+    ${hasDisliked ? '<div class="card-warning">⚠ 忌口</div>' : ''}
     <div class="card-emoji">${dish.emoji}</div>
     <div class="card-name">${dish.name}</div>
     <div class="card-ingredients">${tagHtml}${moreTag}</div>
     <div class="card-category">
       <span style="background:${catColor}22;color:${catColor};border:1px solid ${catColor}44">
-        ${dish.emoji} ${dish.category}
+        ${dish.category}
       </span>
     </div>
   `;
+
+  // Drag handlers
+  el.addEventListener('pointerdown', onDragStart);
   return el;
 }
 
-// ── Drag / Swipe ──
-function attachDrag(card) {
-  activeCard = card;
-  card.addEventListener('pointerdown', onPointerDown);
-}
+// ── Drag to Zone ──
+function onDragStart(e) {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
 
-function onPointerDown(e) {
-  if (e.target.closest('.action-btn')) return;
+  activeCard = card;
   isDragging = true;
   startX = e.clientX;
   startY = e.clientY;
-  currentX = 0;
-  currentY = 0;
-  activeCard.classList.add('dragging');
-  activeCard.setPointerCapture(e.pointerId);
-  activeCard.addEventListener('pointermove', onPointerMove);
-  activeCard.addEventListener('pointerup', onPointerUp);
-  activeCard.addEventListener('pointercancel', onPointerUp);
+
+  // Fix card at its current screen position
+  card.style.position = 'fixed';
+  card.style.left = rect.left + 'px';
+  card.style.top = rect.top + 'px';
+  card.style.width = rect.width + 'px';
+  card.style.zIndex = '200';
+  card.classList.add('dragging');
+
+  card.setPointerCapture(e.pointerId);
+  card.addEventListener('pointermove', onDragMove);
+  card.addEventListener('pointerup', onDragEnd);
+  card.addEventListener('pointercancel', onDragEnd);
 }
 
-function onPointerMove(e) {
-  if (!isDragging) return;
-  currentX = e.clientX - startX;
-  currentY = e.clientY - startY;
-  const rotate = currentX * 0.08;
-  activeCard.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotate}deg)`;
+function onDragMove(e) {
+  if (!isDragging || !activeCard) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  activeCard.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`;
 
-  // Show overlays
-  const threshold = 40;
-  const acceptOverlay = activeCard.querySelector('.card-overlay.accept');
-  const dislikeOverlay = activeCard.querySelector('.card-overlay.dislike');
+  // Check which drop zone the pointer is over
+  const dzLeft = document.getElementById('zone-dislike').getBoundingClientRect();
+  const dzRight = document.getElementById('zone-accept').getBoundingClientRect();
+  const overLeft = e.clientX >= dzLeft.left && e.clientX <= dzLeft.right
+    && e.clientY >= dzLeft.top && e.clientY <= dzLeft.bottom;
+  const overRight = e.clientX >= dzRight.left && e.clientX <= dzRight.right
+    && e.clientY >= dzRight.top && e.clientY <= dzRight.bottom;
 
-  acceptOverlay.style.opacity = currentX > threshold ? Math.min((currentX - threshold) / 60, 1) : 0;
-  dislikeOverlay.style.opacity = currentX < -threshold ? Math.min((-currentX - threshold) / 60, 1) : 0;
+  document.getElementById('zone-dislike').classList.toggle('active', overLeft);
+  document.getElementById('zone-accept').classList.toggle('active', overRight);
 }
 
-function onPointerUp(e) {
-  if (!isDragging) return;
+function onDragEnd(e) {
+  if (!isDragging || !activeCard) return;
   isDragging = false;
-  activeCard.classList.remove('dragging');
-  activeCard.removeEventListener('pointermove', onPointerMove);
-  activeCard.removeEventListener('pointerup', onPointerUp);
-  activeCard.removeEventListener('pointercancel', onPointerUp);
+  activeCard.removeEventListener('pointermove', onDragMove);
+  activeCard.removeEventListener('pointerup', onDragEnd);
+  activeCard.removeEventListener('pointercancel', onDragEnd);
 
-  const thresholdX = 80;
+  // Check drop zone
+  const dzLeft = document.getElementById('zone-dislike').getBoundingClientRect();
+  const dzRight = document.getElementById('zone-accept').getBoundingClientRect();
+  const overLeft = e.clientX >= dzLeft.left && e.clientX <= dzLeft.right
+    && e.clientY >= dzLeft.top && e.clientY <= dzLeft.bottom;
+  const overRight = e.clientX >= dzRight.left && e.clientX <= dzRight.right
+    && e.clientY >= dzRight.top && e.clientY <= dzRight.bottom;
 
-  if (currentX > thresholdX) {
-    flyOff('right', 'accept');
-  } else if (currentX < -thresholdX) {
-    flyOff('left', 'dislike');
+  document.getElementById('zone-dislike').classList.remove('active');
+  document.getElementById('zone-accept').classList.remove('active');
+
+  if (overLeft) {
+    dropVote('dislike');
+  } else if (overRight) {
+    dropVote('accept');
   } else {
     // Snap back
-    activeCard.style.transform = 'translate(0,0) rotate(0)';
-    activeCard.style.transition = 'transform .3s ease';
-    activeCard.querySelectorAll('.card-overlay').forEach(o => o.style.opacity = 0);
-    setTimeout(() => { if (activeCard) activeCard.style.transition = ''; }, 300);
+    activeCard.style.transform = '';
+    activeCard.classList.remove('dragging');
+    activeCard.classList.add('snap-back');
+    setTimeout(() => {
+      if (activeCard) {
+        activeCard.style.position = '';
+        activeCard.style.left = '';
+        activeCard.style.top = '';
+        activeCard.style.width = '';
+        activeCard.style.zIndex = '';
+        activeCard.classList.remove('snap-back');
+      }
+    }, 300);
   }
 }
 
-function flyOff(direction, voteType) {
+function dropVote(voteType) {
   const card = activeCard;
   const dishId = parseInt(card.dataset.dishId);
-  card.classList.add('fly-' + direction);
 
-  // Submit vote
+  // Fly off in the direction of the zone
+  const dir = voteType === 'accept' ? 1 : -1;
+  card.style.transform = `translate(${dir * 300}px, -150px) rotate(${dir * 20}deg)`;
+  card.style.opacity = '0';
+  card.style.transition = 'transform .35s ease, opacity .35s ease';
+
   submitVote(dishId, voteType);
 
   setTimeout(() => {
-    remainingDishes.shift();
+    card.remove();
+    remainingDishes = remainingDishes.filter(d => d.id !== dishId);
     votedCount++;
     updateProgress();
-    renderCardStack();
+    if (remainingDishes.length === 0) showResults();
   }, 350);
-}
-
-// ── Button Actions ──
-function voteAction(voteType) {
-  if (!activeCard || remainingDishes.length === 0) return;
-  const dir = voteType === 'accept' ? 'right' : 'left';
-  flyOff(dir, voteType);
 }
 
 // ── Submit Vote ──
@@ -735,14 +745,6 @@ async function showResults() {
     container.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><p>加载失败，请刷新重试</p></div>';
   }
 }
-
-// ── Keyboard Support ──
-document.addEventListener('keydown', (e) => {
-  if (document.getElementById('screen-vote').classList.contains('active')) {
-    if (e.key === 'ArrowLeft') voteAction('dislike');
-    else if (e.key === 'ArrowRight') voteAction('accept');
-  }
-});
 
 // ── Enter to Start ──
 document.getElementById('nickname-input').addEventListener('keydown', (e) => {
