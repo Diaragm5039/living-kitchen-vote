@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS votes (
     id SERIAL PRIMARY KEY,
     user_name TEXT NOT NULL,
     dish_id INTEGER NOT NULL REFERENCES dishes(id) ON DELETE CASCADE,
-    vote_type TEXT NOT NULL CHECK (vote_type IN ('accept', 'dislike')),
+    vote_type TEXT NOT NULL CHECK (vote_type IN ('accept', 'dislike', 'neutral')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

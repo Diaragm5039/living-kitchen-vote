@@ -186,7 +186,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
       <div class="stat-card"><div class="num" id="stat-users">-</div><div class="label">参与人数</div></div>
       <div class="stat-card"><div class="num" id="stat-dishes">-</div><div class="label">菜品总数</div></div>
       <div class="stat-card"><div class="num" id="stat-votes">-</div><div class="label">投票总数</div></div>
-      <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">接受总数</div></div>
+      <div class="stat-card"><div class="num" id="stat-likes">-</div><div class="label">喜欢总数</div></div>
     </div>
 
     <div class="toolbar">
@@ -201,7 +201,7 @@ button{cursor:pointer;font:inherit;border:none;color:inherit}
       <input type="text" id="filter-search" placeholder="搜索菜品..." oninput="renderTable()">
       <select id="sort-by" onchange="renderTable()">
         <option value="category">按分类排序</option>
-        <option value="accepts">按接受数排序</option>
+        <option value="accepts">按喜欢数排序</option>
         <option value="name">按名称排序</option>
       </select>
     </div>
@@ -313,7 +313,7 @@ function renderTable() {
       <td style="font-weight:500">${d.emoji} ${d.name}</td>
       <td><span class="cat-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${d.category}</span></td>
       <td class="ingredients-col" style="color:#94a3b8;font-size:.75rem">${ingShort}</td>
-      <td class="vote-nums"><span class="accepts">✓${d.accepts}</span> ✕${d.dislikes}</td>
+      <td class="vote-nums"><span class="accepts">♥${d.accepts}</span> ○${d.neutrals || 0} <span style="color:#ef4444">✕${d.dislikes}</span></td>
       <td><div class="actions-cell">
         <button class="btn btn-ghost btn-sm" onclick="openEditModal(${d.id})">编辑</button>
         <button class="btn btn-danger btn-sm" onclick="deleteDish(${d.id},'${d.name}')">删除</button>

@@ -223,7 +223,7 @@ app.post('/api/vote', async (req, res) => {
     const userName = (user || '').trim();
     if (!userName) return res.status(400).json({ error: '请输入昵称' });
     if (!dish_id) return res.status(400).json({ error: '缺少菜品' });
-    if (!['accept', 'dislike'].includes(vote_type))
+    if (!['accept', 'dislike', 'neutral'].includes(vote_type))
       return res.status(400).json({ error: '无效的投票类型' });
 
     const dish = await pool.query('SELECT id FROM dishes WHERE id = $1', [dish_id]);
@@ -256,12 +256,16 @@ app.get('/api/results', async (req, res) => {
       const accepts = await pool.query(
         "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='accept'", [d.id]
       );
+      const neutrals = await pool.query(
+        "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='neutral'", [d.id]
+      );
       const dislikes = await pool.query(
         "SELECT COUNT(*) as c FROM votes WHERE dish_id=$1 AND vote_type='dislike'", [d.id]
       );
       const a = parseInt(accepts.rows[0].c);
+      const n = parseInt(neutrals.rows[0].c);
       const dl = parseInt(dislikes.rows[0].c);
-      results.push({ ...addEmoji(d), accepts: a, dislikes: dl, total: a + dl });
+      results.push({ ...addEmoji(d), accepts: a, neutrals: n, dislikes: dl, total: a + n + dl });
     }
     results.sort((a, b) => {
       const ai = CATEGORIES.indexOf(a.category);
@@ -441,6 +445,11 @@ async function main() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Auto-update votes CHECK constraint to include 'neutral'
+    await pool.query(`ALTER TABLE votes DROP CONSTRAINT IF EXISTS votes_vote_type_check`);
+    await pool.query(`ALTER TABLE votes ADD CONSTRAINT votes_vote_type_check CHECK (vote_type IN ('accept', 'dislike', 'neutral'))`);
+
     console.log('  Tables ready');
   } catch (e) {
     console.error('  Database error:', e.message);
