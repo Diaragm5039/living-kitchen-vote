@@ -333,7 +333,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>拖拽菜品到左侧不喜欢 · 右侧我喜欢<br>也可以点提交跳过当前菜品</p>
+      <p>拖拽菜品到左侧不喜欢 · 右侧我喜欢<br>未操作的菜品视为中立，完成后点提交</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -363,7 +363,7 @@ input{font:inherit;color:inherit}
     <div class="drop-zone like-zone" id="zone-like">我喜欢 ♥</div>
     <div class="card-grid" id="card-grid"></div>
     <div class="submit-bar">
-      <button class="submit-btn" id="btn-submit" onclick="submitNeutral()">提交</button>
+      <button class="submit-btn" id="btn-submit" onclick="submitAll()">提交</button>
     </div>
   </div>
 
@@ -676,24 +676,23 @@ function dropVote(voteType) {
   }, 350);
 }
 
-// ── Submit Neutral ──
-function submitNeutral() {
-  if (remainingDishes.length === 0) return;
-  const dish = remainingDishes[0];
-  const cardEl = document.getElementById('card-grid').firstElementChild;
-  if (cardEl) {
-    cardEl.style.transition = 'opacity .3s, transform .3s';
-    cardEl.style.opacity = '0';
-    cardEl.style.transform = 'translateY(20px)';
-  }
-  submitVote(dish.id, 'neutral');
-  setTimeout(() => {
-    if (cardEl) cardEl.remove();
-    remainingDishes = remainingDishes.filter(d => d.id !== dish.id);
-    votedCount++;
+// ── Submit All Votes ──
+async function submitAll() {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  // All remaining (untouched) dishes count as neutral
+  if (remainingDishes.length > 0) {
+    await Promise.all(remainingDishes.map(d =>
+      submitVote(d.id, 'neutral').catch(() => {})
+    ));
+    votedCount += remainingDishes.length;
+    remainingDishes = [];
     updateProgress();
-    if (remainingDishes.length === 0) showResults();
-  }, 300);
+  }
+
+  showResults();
 }
 
 // ── Submit Vote ──
