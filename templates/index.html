@@ -97,18 +97,6 @@ input{font:inherit;color:inherit}
 /* ═══ Vote Screen ═══ */
 .vote-screen{position:relative;overflow:hidden;padding-top:8px;gap:0}
 
-/* Progress */
-.progress-bar{
-  height:4px;border-radius:2px;background:rgba(255,255,255,.08);
-  overflow:hidden;flex-shrink:0;margin:0 12px;
-}
-.progress-bar .fill{
-  height:100%;border-radius:2px;
-  background:linear-gradient(90deg,#8b5cf6,#38bdf8);
-  transition:width .4s ease;
-}
-.progress-text{font-size:.75rem;color:#94a3b8;text-align:center;flex-shrink:0;padding:4px 12px}
-
 /* Card Grid */
 .card-grid{
   flex:1;overflow-y:auto;padding:8px 12px 12px;
@@ -179,8 +167,8 @@ input{font:inherit;color:inherit}
   box-shadow:0 0 12px rgba(34,197,94,.15);
 }
 .card.voted-like::after{
-  content:'♥ 喜欢';
-  position:absolute;top:6px;right:6px;
+  content:'♥ 极喜欢';
+  position:absolute;bottom:6px;right:6px;
   padding:2px 8px;border-radius:8px;
   font-size:.6rem;font-weight:700;
   background:rgba(34,197,94,.2);color:#22c55e;
@@ -192,8 +180,8 @@ input{font:inherit;color:inherit}
   opacity:.7;
 }
 .card.voted-dislike::after{
-  content:'✕ 不喜欢';
-  position:absolute;top:6px;right:6px;
+  content:'✕ 极不喜欢';
+  position:absolute;bottom:6px;right:6px;
   padding:2px 8px;border-radius:8px;
   font-size:.6rem;font-weight:700;
   background:rgba(239,68,68,.15);color:#ef4444;
@@ -446,7 +434,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>点击菜品选择喜欢或不喜欢<br><span class="neutral-hint">未操作的菜品视为中立</span>，完成后点提交</p>
+      <p><span class="neutral-hint">点击</span>菜品选择喜欢或不喜欢<br><span class="neutral-hint">未操作的菜品视为中立</span>，完成后点提交</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -471,8 +459,6 @@ input{font:inherit;color:inherit}
 
   <!-- Vote Screen -->
   <div id="screen-vote" class="screen vote-screen">
-    <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
-    <div class="progress-text" id="progress-text">0 / 0</div>
     <div class="card-grid" id="card-grid"></div>
     <div class="submit-bar">
       <button class="submit-btn" id="btn-submit" onclick="submitAll()">提交</button>
@@ -596,7 +582,6 @@ async function confirmIngredients() {
   }
   showScreen('vote');
   renderCardGrid();
-  updateVoteProgress();
 }
 
 // ── Disliked Ingredient Match ──
@@ -716,17 +701,6 @@ function voteCard(card, voteType) {
 
   // Send vote immediately
   submitVote(dishId, voteType);
-
-  // Update progress
-  updateVoteProgress();
-}
-
-function updateVoteProgress() {
-  const cards = document.querySelectorAll('#card-grid .card');
-  const votedCards = document.querySelectorAll('#card-grid .card.voted-like, #card-grid .card.voted-dislike');
-  votedCount = votedCards.length;
-  document.getElementById('progress-fill').style.width = (votedCount / totalDishes * 100) + '%';
-  document.getElementById('progress-text').textContent = votedCount + ' / ' + totalDishes;
 }
 
 // ── Submit All Votes ──
