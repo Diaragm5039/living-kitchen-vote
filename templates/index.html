@@ -142,7 +142,20 @@ input{font:inherit;color:inherit}
   z-index:10;
   border-radius:12px;
 }
+.card-cancel-overlay{
+  position:absolute;inset:0;
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(15,10,26,.85);
+  backdrop-filter:blur(4px);
+  z-index:10;
+  border-radius:12px;
+}
 .card.selected .card-vote-overlay{display:flex}
+.card.selected.voted-like .card-vote-overlay,
+.card.selected.voted-dislike .card-vote-overlay{display:none}
+.card.selected.voted-like .card-cancel-overlay,
+.card.selected.voted-dislike .card-cancel-overlay{display:flex}
 .card-vote-btn{
   width:80%;padding:10px;border-radius:12px;
   font-size:.85rem;font-weight:600;
@@ -160,6 +173,11 @@ input{font:inherit;color:inherit}
   border:1px solid rgba(239,68,68,.25);
 }
 .card-vote-btn.btn-dislike:active{background:rgba(239,68,68,.25)}
+.card-vote-btn.btn-cancel{
+  background:rgba(255,255,255,.06);color:#94a3b8;
+  border:1px solid rgba(255,255,255,.1);
+}
+.card-vote-btn.btn-cancel:active{background:rgba(255,255,255,.12)}
 
 /* Voted states */
 .card.voted-like{
@@ -682,6 +700,9 @@ function createCard(dish) {
       <button class="card-vote-btn btn-like" onclick="event.stopPropagation();voteCard(this.closest('.card'),'accept')">♥ 喜欢</button>
       <button class="card-vote-btn btn-dislike" onclick="event.stopPropagation();voteCard(this.closest('.card'),'dislike')">✕ 不喜欢</button>
     </div>
+    <div class="card-cancel-overlay">
+      <button class="card-vote-btn btn-cancel" onclick="event.stopPropagation();cancelVote(this.closest('.card'))">取消</button>
+    </div>
   `;
 
   // Click to select/deselect
@@ -727,6 +748,18 @@ function voteCard(card, voteType) {
 
   // Send vote immediately
   submitVote(dishId, voteType);
+}
+
+function cancelVote(card) {
+  const dishId = parseInt(card.dataset.dishId);
+
+  // Remove selection and vote state
+  card.classList.remove('selected', 'voted-like', 'voted-dislike');
+  delete card.dataset.vote;
+  selectedCard = null;
+
+  // Submit as neutral
+  submitVote(dishId, 'neutral');
 }
 
 // ── Submit All Votes ──
