@@ -484,7 +484,7 @@ input{font:inherit;color:inherit}
   <!-- Header -->
   <div class="header">
     <h1>Living Kitchen</h1>
-    <div class="subtitle">2026 夏季美食投票（官方菜单）</div>
+    <div class="subtitle">2026 夏季美食投票（官方菜单含指导）</div>
   </div>
 
   <!-- Welcome Screen -->
@@ -835,7 +835,7 @@ function submitAll() {
     <div class="tailor-box">
       <div class="tailor-icon">🍳</div>
       <h3>有没有你最喜欢 / 最拿手的菜品<br>但是表单里没有？</h3>
-      <h3><span class="neutral-hint">这非常重要！</span></h3>
+      <h1><span class="neutral-hint">这非常重要！</span></h1>
       <p class="tailor-hint">写下来，将综合考虑后完全自主DIY<br>没有的话直接点提交即可</p>
       <textarea id="tailor-input" placeholder="例如：红烧肉、糖醋排骨..." rows="3"></textarea>
       <div class="tailor-actions">
@@ -845,7 +845,15 @@ function submitAll() {
   `;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) {
+      overlay.remove();
+      // Restore submit button state so the user can reopen the dialog
+      const submitBtn = document.getElementById('btn-submit');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '提交';
+      }
+    }
   });
 
   // Focus the textarea
