@@ -578,7 +578,8 @@ async function startVoting() {
     votedCount = myVotes.length;
 
     // If this user already has a preferences record, skip ingredient picker
-    const hasPrefs = prefs && (prefs.disliked_ingredients || prefs.tailor);
+    // Empty object = no record yet (never visited picker); object with keys = visited before
+    const hasPrefs = prefs && Object.keys(prefs).length > 0;
     if (hasPrefs) {
       if (prefs.disliked_ingredients) {
         dislikedIngredients = prefs.disliked_ingredients.split('、').map(s => s.trim()).filter(Boolean);

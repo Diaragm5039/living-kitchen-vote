@@ -436,7 +436,7 @@ app.get('/api/my-preferences', async (req, res) => {
       [userName]
     );
     if (rows.length === 0) {
-      return res.json({ disliked_ingredients: '', tailor: '' });
+      return res.json({});
     }
     res.json(rows[0]);
   } catch (e) {
