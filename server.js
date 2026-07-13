@@ -364,6 +364,7 @@ app.delete('/api/admin/dishes/:id', requireAdmin, async (req, res) => {
 app.post('/api/admin/reset-votes', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM votes');
+    await pool.query('DELETE FROM user_dietary');
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

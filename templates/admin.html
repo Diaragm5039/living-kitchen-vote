@@ -383,7 +383,7 @@ async function deleteDish(id, name) {
 }
 
 async function resetVotes() {
-  if (!confirm('确定要重置所有投票吗？此操作不可恢复！')) return;
+  if (!confirm('确定要重置所有数据吗？\n\n将清除：所有投票记录 + 所有忌口 + 所有推荐菜品\n此操作不可恢复！')) return;
   try {
     await api('/api/admin/reset-votes', { method: 'POST' });
     loadData();
