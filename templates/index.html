@@ -218,6 +218,36 @@ input{font:inherit;color:inherit}
   text-align:center;padding:8px 0;flex-shrink:0;
 }
 .results-header h2{font-size:1.3rem;font-weight:700}
+
+/* User Preference Card */
+.my-pref-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:16px 18px;
+  margin:0 12px 8px;
+  flex-shrink:0;
+}
+.my-pref-card .pref-title{
+  font-size:.85rem;font-weight:700;color:#e2e8f0;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.my-pref-row{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:8px;
+}
+.my-pref-row:last-child{margin-bottom:0}
+.my-pref-row .pref-label{
+  font-size:.7rem;font-weight:600;color:#94a3b8;
+  flex-shrink:0;padding-top:2px;
+}
+.my-pref-row .pref-value{
+  font-size:.8rem;color:#fbbf24;line-height:1.5;
+  word-break:break-word;
+}
+.my-pref-row .pref-value.dislike-val{color:#ef4444}
+.my-pref-row .pref-value.tailor-val{color:#a78bfa}
+.my-pref-row .pref-value.empty{color:#64748b;font-style:italic}
 .stats-row{
   display:flex;justify-content:center;gap:24px;padding:8px 0;flex-shrink:0;
 }
@@ -777,17 +807,38 @@ async function showResults() {
   container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>加载中...</p></div>';
 
   try {
-    const [results, stats] = await Promise.all([
+    const [results, stats, prefs] = await Promise.all([
       api('/api/results'),
-      api('/api/stats')
+      api('/api/stats'),
+      api('/api/my-preferences?user=' + encodeURIComponent(userName))
     ]);
 
     const maxAccepts = Math.max(1, ...results.map(r => r.accepts));
+
+    // Build preference card
+    const hasDisliked = prefs && prefs.disliked_ingredients && prefs.disliked_ingredients.trim();
+    const hasTailor = prefs && prefs.tailor && prefs.tailor.trim();
+    let prefHtml = '';
+    if (hasDisliked || hasTailor) {
+      prefHtml = `
+        <div class="my-pref-card fade-in">
+          <div class="pref-title">📋 我的偏好</div>
+          ${hasDisliked ? `<div class="my-pref-row">
+            <span class="pref-label">忌口：</span>
+            <span class="pref-value dislike-val">${prefs.disliked_ingredients}</span>
+          </div>` : ''}
+          ${hasTailor ? `<div class="my-pref-row">
+            <span class="pref-label">推荐菜品：</span>
+            <span class="pref-value tailor-val">${prefs.tailor}</span>
+          </div>` : ''}
+        </div>`;
+    }
 
     let html = `
       <div class="results-header fade-in">
         <h2>🎉 投票结果</h2>
       </div>
+      ${prefHtml}
       <div class="stats-row fade-in">
         <div class="stat"><div class="num">${stats.total_users}</div><div class="label">参与人数</div></div>
         <div class="stat"><div class="num">${stats.total_dishes}</div><div class="label">菜品总数</div></div>

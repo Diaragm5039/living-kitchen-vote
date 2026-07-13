@@ -407,6 +407,23 @@ app.post('/api/preferences', async (req, res) => {
   }
 });
 
+app.get('/api/my-preferences', async (req, res) => {
+  try {
+    const userName = (req.query.user || '').trim();
+    if (!userName) return res.status(400).json({ error: '缺少用户名' });
+    const { rows } = await pool.query(
+      'SELECT disliked_ingredients, tailor FROM user_dietary WHERE user_name = $1',
+      [userName]
+    );
+    if (rows.length === 0) {
+      return res.json({ disliked_ingredients: '', tailor: '' });
+    }
+    res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/admin/dietary', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
