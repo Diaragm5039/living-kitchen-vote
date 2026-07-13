@@ -97,6 +97,20 @@ input{font:inherit;color:inherit}
 /* ═══ Vote Screen ═══ */
 .vote-screen{position:relative;overflow:hidden;padding-top:8px;gap:0}
 
+/* Back to Ingredients Bar */
+.back-bar{
+  flex-shrink:0;padding:0 12px;
+}
+.back-link{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.8rem;color:#94a3b8;
+  padding:6px 10px;border-radius:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  transition:all .2s;
+}
+.back-link:active{transform:scale(.97);background:rgba(255,255,255,.08);color:#e2e8f0}
+
 /* Card Grid */
 .card-grid{
   flex:1;overflow-y:auto;padding:8px 12px 12px;
@@ -470,7 +484,7 @@ input{font:inherit;color:inherit}
   <!-- Header -->
   <div class="header">
     <h1>Living Kitchen</h1>
-    <div class="subtitle">2026 夏季美食投票</div>
+    <div class="subtitle">2026 夏季美食投票（官方菜单）</div>
   </div>
 
   <!-- Welcome Screen -->
@@ -490,7 +504,7 @@ input{font:inherit;color:inherit}
   <div id="screen-ingredients" class="screen ingredient-picker">
     <h2>🚫 有没有不吃的食材？</h2>
     <p class="picker-sub">选好后，含这些食材的菜品会为你标注提醒，偏好也会被记录</p>
-    <p class="picker-sub">菇 葱 椒 为大类，无法满足需求请在其他内添加</p>
+    <p class="picker-sub">菇 葱 椒 为大类，无法满足需求请在其他内添加 彩椒/辣椒...</p>
     <div class="ingredient-chips" id="ingredient-chips"></div>
     <div class="custom-ingredient-wrap">
       <input id="custom-ingredient" type="text" placeholder="其他食材..." maxlength="20">
@@ -498,11 +512,14 @@ input{font:inherit;color:inherit}
     </div>
     <p class="picker-hint" style="margin-top:-10px">多项可用顿号隔开，如：花椒、八角</p>
     <p class="picker-sub">可跳过，直接开始投票</p>
-    <button class="btn-primary" onclick="confirmIngredients()">开始投票</button>
+    <button class="btn-primary" id="btn-confirm-ingredients" onclick="confirmIngredients()">开始投票</button>
   </div>
 
   <!-- Vote Screen -->
   <div id="screen-vote" class="screen vote-screen">
+    <div class="back-bar">
+      <button class="back-link" onclick="backToIngredients()">← 修改忌口</button>
+    </div>
     <div class="card-grid" id="card-grid"></div>
     <div class="submit-bar">
       <button class="submit-btn" id="btn-submit" onclick="submitAll()">提交</button>
@@ -553,14 +570,24 @@ async function startVoting() {
   btn.textContent = '加载中...';
 
   try {
-    allDishes = await api('/api/dishes');
-    remainingDishes = await api('/api/dishes/remaining?user=' + encodeURIComponent(userName));
-    const myVotes = await api('/api/my-votes?user=' + encodeURIComponent(userName));
-    totalDishes = allDishes.length;
+    const [prefs, myVotes] = await Promise.all([
+      api('/api/my-preferences?user=' + encodeURIComponent(userName)),
+      api('/api/my-votes?user=' + encodeURIComponent(userName))
+    ]);
+    totalDishes = 0;
     votedCount = myVotes.length;
 
-    if (remainingDishes.length === 0) {
-      showResults();
+    // If this user already has a preferences record, skip ingredient picker
+    const hasPrefs = prefs && (prefs.disliked_ingredients || prefs.tailor);
+    if (hasPrefs) {
+      if (prefs.disliked_ingredients) {
+        dislikedIngredients = prefs.disliked_ingredients.split('、').map(s => s.trim()).filter(Boolean);
+      }
+      await enterVoteScreen();
+    } else if (votedCount > 0) {
+      // Has votes but no preferences yet — go to ingredient picker as new
+      showScreen('ingredients');
+      renderIngredientChips();
     } else {
       showScreen('ingredients');
       renderIngredientChips();
@@ -570,6 +597,17 @@ async function startVoting() {
   }
   btn.disabled = false;
   btn.textContent = '开始投票';
+}
+
+// Load all dishes with vote states and render the vote screen
+async function enterVoteScreen() {
+  const dishesWithVotes = await api('/api/dishes/with-my-votes?user=' + encodeURIComponent(userName));
+  allDishes = dishesWithVotes;
+  remainingDishes = dishesWithVotes;
+  totalDishes = dishesWithVotes.length;
+  votedCount = dishesWithVotes.filter(d => d.my_vote && d.my_vote !== 'neutral').length;
+  showScreen('vote');
+  renderCardGrid();
 }
 
 // ── Ingredient Picker ──
@@ -614,18 +652,15 @@ function addCustomIngredient() {
 
 async function confirmIngredients() {
   // Save dietary preferences
-  if (dislikedIngredients.length > 0) {
-    try {
-      await api('/api/preferences', {
-        method: 'POST',
-        body: JSON.stringify({ user: userName, disliked_ingredients: dislikedIngredients.join('、') })
-      });
-    } catch (e) {
-      console.error('Failed to save preferences:', e);
-    }
+  try {
+    await api('/api/preferences', {
+      method: 'POST',
+      body: JSON.stringify({ user: userName, disliked_ingredients: dislikedIngredients.join('、') })
+    });
+  } catch (e) {
+    console.error('Failed to save preferences:', e);
   }
-  showScreen('vote');
-  renderCardGrid();
+  await enterVoteScreen();
 }
 
 // ── Disliked Ingredient Match ──
@@ -659,6 +694,17 @@ function createCard(dish) {
   const el = document.createElement('div');
   el.className = 'card';
   el.dataset.dishId = dish.id;
+
+  // Pre-apply previous vote state (from server) so refresh preserves history
+  const myVote = dish.my_vote;
+  if (myVote === 'accept') {
+    el.classList.add('voted-like');
+    el.dataset.vote = 'accept';
+  } else if (myVote === 'dislike') {
+    el.classList.add('voted-dislike');
+    el.dataset.vote = 'dislike';
+  }
+  // neutral / null → no dataset.vote, will be treated as unvoted at final submit
 
   // Build ingredient tags with disliked ingredient highlighting
   const allIngredients = dish.ingredients.split('、').map(s => s.trim()).filter(Boolean);
@@ -708,6 +754,21 @@ function createCard(dish) {
   // Click to select/deselect
   el.addEventListener('click', () => onCardClick(el));
   return el;
+}
+
+// ── Back to Ingredient Picker ──
+function backToIngredients() {
+  // Deselect any card
+  if (selectedCard) {
+    selectedCard.classList.remove('selected');
+    selectedCard = null;
+  }
+  // Update the picker button text to reflect "modify" mode
+  const confirmBtn = document.getElementById('btn-confirm-ingredients');
+  if (confirmBtn) confirmBtn.textContent = '保存并返回投票';
+  // Re-render chips with current dislikedIngredients highlighted
+  renderIngredientChips();
+  showScreen('ingredients');
 }
 
 // ── Click to Vote ──
@@ -773,7 +834,8 @@ function submitAll() {
     <div class="tailor-box">
       <div class="tailor-icon">🍳</div>
       <h3>有没有你最喜欢 / 最拿手的菜品<br>但是表单里没有？</h3>
-      <p class="tailor-hint">写下来，下次也许就能加入菜单！<br>没有的话直接点提交即可</p>
+      <h3><span class="neutral-hint">这非常重要！</span></h3>
+      <p class="tailor-hint">写下来，将综合考虑后完全自主DIY<br>没有的话直接点提交即可</p>
       <textarea id="tailor-input" placeholder="例如：红烧肉、糖醋排骨..." rows="3"></textarea>
       <div class="tailor-actions">
         <button class="btn-tailor-submit" onclick="doFinalSubmit()">提交</button>

@@ -200,6 +200,25 @@ app.get('/api/dishes/remaining', async (req, res) => {
   }
 });
 
+// All dishes + current user's vote status for each dish
+app.get('/api/dishes/with-my-votes', async (req, res) => {
+  try {
+    const user = (req.query.user || '').trim();
+    if (!user) return res.status(400).json({ error: '缺少用户名' });
+
+    const { rows } = await pool.query(
+      `SELECT d.*, v.vote_type AS my_vote
+       FROM dishes d
+       LEFT JOIN votes v ON v.dish_id = d.id AND v.user_name = $1
+       ORDER BY ${catOrderSQL()}, d.id`,
+      [user]
+    );
+    res.json(rows.map(addEmoji));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/my-votes', async (req, res) => {
   try {
     const user = (req.query.user || '').trim();
