@@ -90,6 +90,10 @@ input{font:inherit;color:inherit}
 .btn-primary:active{transform:scale(.97)}
 .btn-primary:disabled{opacity:.5;pointer-events:none}
 
+.welcome .neutral-hint{
+  color:#ef4444;font-size:1.05rem;font-weight:700;
+}
+
 /* ═══ Vote Screen ═══ */
 .vote-screen{position:relative;overflow:hidden;padding-top:8px;gap:0}
 
@@ -442,7 +446,7 @@ input{font:inherit;color:inherit}
     <div class="welcome fade-in">
       <div class="logo">🍽</div>
       <h2>选出你想吃的<span>美食</span></h2>
-      <p>点击菜品选择喜欢或不喜欢<br>未操作的菜品视为中立，完成后点提交</p>
+      <p>点击菜品选择喜欢或不喜欢<br><span class="neutral-hint">未操作的菜品视为中立</span>，完成后点提交</p>
       <div class="input-group">
         <input id="nickname-input" type="text" placeholder="输入你的昵称" maxlength="20" autocomplete="off">
       </div>
@@ -744,6 +748,9 @@ function submitAll() {
     </div>
   `;
   document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
 
   // Focus the textarea
   setTimeout(() => document.getElementById('tailor-input')?.focus(), 100);
