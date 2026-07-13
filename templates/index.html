@@ -941,34 +941,29 @@ function confirmReset() {
 
 async function doReset() {
   document.querySelector('.confirm-overlay')?.remove();
+  // Disable all interactive elements to prevent double-click
+  document.querySelectorAll('button').forEach(b => b.disabled = true);
+
+  let ok = true;
   try {
-    await api('/api/reset-my-votes', {
+    const res = await api('/api/reset-my-votes', {
       method: 'POST',
       body: JSON.stringify({ user: userName })
     });
+    if (!res || res.error) ok = false;
   } catch (e) {
     console.error('Reset failed:', e);
+    ok = false;
   }
-  // Reset local state and re-enter voting with same username
-  dislikedIngredients = [];
-  votedCount = 0;
-  remainingDishes = [];
 
-  const btn = document.getElementById('btn-start');
-  btn.disabled = true;
-  btn.textContent = '加载中...';
-  try {
-    allDishes = await api('/api/dishes');
-    remainingDishes = await api('/api/dishes/remaining?user=' + encodeURIComponent(userName));
-    totalDishes = allDishes.length;
-    votedCount = 0;
-    showScreen('ingredients');
-    renderIngredientChips();
-  } catch (e) {
-    alert('加载失败，请刷新重试');
+  if (!ok) {
+    alert('重置失败，请刷新页面重试');
+    document.querySelectorAll('button').forEach(b => b.disabled = false);
+    return;
   }
-  btn.disabled = false;
-  btn.textContent = '开始投票';
+
+  // Full page reload — all local state wiped, back to welcome screen
+  location.reload();
 }
 
 // ── Enter to Start ──
